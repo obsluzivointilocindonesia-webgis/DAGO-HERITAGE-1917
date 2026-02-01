@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <title>TERRA GOLF</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.110/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+
+    <div class="ui-overlay">
+        <button id="clearBtn" class="btn btn-navy">Hapus Semua Pengukuran</button>
+        <button id="contourBtn" class="btn btn-dark">Tampilkan Kontur: OFF</button>
+        
+        <div id="toolbar-info">
+            <strong>Instruksi:</strong><br>
+            Klik dua titik di peta untuk melihat:<br>
+            Jarak, Beda Tinggi, Arah, & Profil Elevasi.
+        </div>
+    </div>
+
+    <div id="chartContainer">
+        <canvas id="profileChart"></canvas>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
