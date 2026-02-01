@@ -4,7 +4,7 @@ body, html, #cesiumContainer {
 
 .ui-overlay {
     position: absolute; top: 20px; left: 20px; z-index: 1000;
-    display: flex; flex-direction: column; gap: 10px;
+    display: flex; flex-direction: column; gap: 5px;
 }
 
 .btn {
@@ -36,6 +36,9 @@ body, html, #cesiumContainer {
         width: 100%;
         text-align: center;
     }
+    .chart-wrapper {
+        height: 150px; /* Lebih pendek di HP */
+    }
 }
 
 #toolbar-info {
@@ -46,13 +49,24 @@ body, html, #cesiumContainer {
 }
 
 #chartContainer {
-    position: absolute; bottom: 30px; left: 30px; 
-    width: 450px; height: 250px; 
-    background: rgba(255,255,255,0.95); 
-    padding: 15px; border-radius: 8px; 
-    display: none; z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60%;
+    background: rgba(255, 255, 255, 0.9); /* Putih transparan */
+    z-index: 1000;
+    display: none; /* Muncul hanya saat ada data */
+    padding: 10px;
+    box-sizing: border-box;
+    border-top: 2px solid #ccc;
 }
+
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px; /* Tinggi default desktop */
+}
+
 #cesiumContainer {
     touch-action: none; /* Mencegah browser melakukan scroll saat kita menyentuh map */
 }

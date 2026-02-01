@@ -225,21 +225,39 @@ async function generateMultiPointProfile() {
 function renderChart(labels, data) {
     const ctx = document.getElementById('profileChart').getContext('2d');
     if (profileChart) profileChart.destroy();
+    
     profileChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Elevasi Kumulatif (m)',
+                label: 'Elevasi (m)',
                 data: data,
                 borderColor: '#2ecc71',
                 backgroundColor: 'rgba(46, 204, 113, 0.2)',
                 fill: true,
-                tension: 0.1,
+                tension: 0.3, // Membuat garis lebih halus/melengkung
                 pointRadius: 0
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, // WAJIB: agar mengikuti tinggi div wrapper
+            plugins: {
+                legend: {
+                    display: false // Sembunyikan legenda agar lebih luas di HP
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 5 // Batasi jumlah label teks di bawah agar tidak tumpang tindih
+                    }
+                }
+            }
+        }
     });
 }
 
