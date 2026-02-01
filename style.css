@@ -21,10 +21,10 @@ body, html, #cesiumContainer {
 
 @media screen and (max-width: 768px) {
     .btn {
-        padding: 15px 25px; /* Area klik lebih luas */
-        font-size: 18px;    /* Tulisan lebih besar */
+        padding: 10px 20px; /* Area klik lebih luas */
+        font-size: 14px;    /* Tulisan lebih besar */
         margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
-        width: 90%;         /* Opsional: Tombol melebar hampir memenuhi layar */
+        width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
     }
 
