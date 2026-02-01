@@ -125,6 +125,11 @@ const viewerControls = viewer.scene.screenSpaceCameraController;
 
 // 1. FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
+    
+    const infoBox = document.getElementById('toolbar-info');
+    if (infoBox) {
+        infoBox.style.display = 'none'; 
+    }
     // Jika sedang nge-drag, jangan buat titik baru
     if (isDragging) return;
 
@@ -225,39 +230,21 @@ async function generateMultiPointProfile() {
 function renderChart(labels, data) {
     const ctx = document.getElementById('profileChart').getContext('2d');
     if (profileChart) profileChart.destroy();
-    
     profileChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Elevasi (m)',
+                label: 'Elevasi Kumulatif (m)',
                 data: data,
                 borderColor: '#2ecc71',
                 backgroundColor: 'rgba(46, 204, 113, 0.2)',
                 fill: true,
-                tension: 0.3, // Membuat garis lebih halus/melengkung
+                tension: 0.1,
                 pointRadius: 0
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // WAJIB: agar mengikuti tinggi div wrapper
-            plugins: {
-                legend: {
-                    display: false // Sembunyikan legenda agar lebih luas di HP
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 5 // Batasi jumlah label teks di bawah agar tidak tumpang tindih
-                    }
-                }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
@@ -336,4 +323,8 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     activePoints = []; labelsList = [];
     if (profileChart) profileChart.destroy();
     document.getElementById('chartContainer').style.display = 'none';
+    const infoBox = document.getElementById('toolbar-info');
+    if (infoBox) {
+        infoBox.style.display = 'block'; 
+    }
 });
