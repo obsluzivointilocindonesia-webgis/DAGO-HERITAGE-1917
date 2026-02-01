@@ -17,9 +17,34 @@
     </div>
 </div>
     <div class="ui-overlay">
+        <div id="hole-selector-container">
+            <select id="holeSelect" class="menu-button-ops">
+            <option value="">-- Pilih Hole --</option>
+            <option value="1">Hole 1</option>
+            <option value="2">Hole 2</option>
+            <option value="3">Hole 3</option>
+            <option value="4">Hole 4</option>
+            <option value="5">Hole 5</option>
+            <option value="6">Hole 6</option>
+            <option value="7">Hole 7</option>
+            <option value="8">Hole 8</option>
+            <option value="9">Hole 9</option>
+            <option value="10">Hole 10</option>
+            <option value="11">Hole 11</option>
+            <option value="12">Hole 12</option>
+            <option value="13">Hole 13</option>
+            <option value="14">Hole 14</option>
+            <option value="15">Hole 15</option>
+            <option value="16">Hole 16</option>
+            <option value="17">Hole 17</option>
+            <option value="18">Hole 18</option>
+            </select>
+        </div>
         <button id="clearBtn" class="btn btn-navy">Hapus Semua Pengukuran</button>
         <button id="contourBtn" class="btn btn-dark">Tampilkan Kontur: OFF</button>
-        <button id="undoBtn" class="menu-button" style="background-color: #139643;">Hapus Titik Terakhir</button>
+        <button id="undoBtn" class="menu-button" style="background-color: #9e4949;">Hapus Titik Terakhir</button>
+        <button id="saveTrackBtn" class="menu-button" style="background-color: #27ae60;">Simpan Track</button>
+        <button id="historyBtn" class="menu-button" style="background-color: #2980b9;">Riwayat Track</button>
         <div id="toolbar-info">
             <strong>Instruksi:</strong><br>
             Klik dua titik di peta <br>
@@ -27,13 +52,6 @@
             & Profil Elevasi muncul.
         </div>
     </div>
-
-  
-
-    <div id="chartContainer">
-        <canvas id="profileChart"></canvas>
-    </div>
-
     <script src="main.js"></script>
 </body>
 </html>

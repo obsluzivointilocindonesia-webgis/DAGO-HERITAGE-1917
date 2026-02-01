@@ -16,6 +16,14 @@ body, html, #cesiumContainer {
     cursor: pointer;
 }
 
+.menu-button-ops{
+    padding: 10px 20px; cursor: pointer; border: none; 
+    border-radius: 5px; font-weight: bold; color: rgb(0, 0, 0);
+    transition: 0.3s;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+}
 .menu-button {
     padding: 10px 20px; cursor: pointer; border: none; 
     border-radius: 5px; font-weight: bold; color: white;
@@ -29,6 +37,14 @@ body, html, #cesiumContainer {
 .btn-dark { background: #2c3e50; }
 
 @media screen and (max-width: 768px) {
+    .menu-button-ops{
+        padding: 10px 20px; 
+        font-size: 12px;
+        margin: 5px;
+        width: 80%;
+        display: block;
+    }
+
     .btn {
         padding: 10px 20px; /* Area klik lebih luas */
         font-size: 12px;    /* Tulisan lebih besar */
@@ -60,7 +76,7 @@ body, html, #cesiumContainer {
 #toolbar-info {
     background-color: rgba(255, 255, 255, 0.8);
     color: black; border: 1px solid #333;
-    border-radius: 10px; padding: 5px;
+    border-radius: 10px; padding: 8px;
     font-family: sans-serif; pointer-events: none;
 }
 

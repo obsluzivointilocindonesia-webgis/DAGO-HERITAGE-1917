@@ -13,6 +13,8 @@ let contourDataSource = null;
 let isContourVisible = false;
 let isDragging = false;
 let draggedEntity = null;
+let currentContourTileset = null; // Menyimpan tileset kontur yang sedang aktif
+let isContourOn = false;         // Status tombol ON/OFF
 
 // 2. LOAD ASSET
 async function init() {
@@ -344,33 +346,84 @@ function renderChart(labels, data) {
 }
 
 // 7. KONTUR & CLEAR
+const holeData = {
+ "1": {//-6.868553594615521, 107.62457935894973;  4406266
+        center: Cesium.Cartesian3.fromDegrees(107.6245793589, -6.86855359, 1000), // Koordinat Hole 1
+        contourAssetId: 4406266, // ID Asset Kontur Hole 1 di Ion
+        heading: 210, pitch: -35, roll:0 
+    },
+    "2": {//-6.8703580,107.6238354 ; 4406267
+        center: Cesium.Cartesian3.fromDegrees(107.6238354, -6.8703580, 1000),
+        contourAssetId: 4406267,
+        heading: 25, pitch: -60, roll:0
+    },
+
+    "3": {//-6.8697840,107.6244687 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6244687, -6.8697840, 950),
+        contourAssetId: 4406268,
+        heading: 200, pitch: -45, roll:0
+    }
+};
+
+//let currentContourLayer = null;
+
+document.getElementById('holeSelect').addEventListener('change', async (e) => {
+    const id = e.target.value;
+    if (!id) return;
+
+    const data = holeData[id];
+
+    // 1. Zoom ke Hole
+    viewer.camera.flyTo({
+        destination: data.center,
+        orientation: { heading: Cesium.Math.toRadians(data.heading), pitch: Cesium.Math.toRadians(data.pitch) }
+    });
+
+    // 2. Hapus Kontur sebelumnya jika ada
+    if (currentContourLayer) {
+        viewer.scene.primitives.remove(currentContourLayer);
+        currentContourLayer = null;
+    }
+
+    // 3. Load Kontur spesifik Hole ini (tapi jangan tampilkan dulu sebelum tombol Kontur ON)
+    currentContourLayer = await Cesium.Cesium3DTileset.fromIonAssetId(data.contourAssetId);
+    currentContourLayer.show = false; // Default OFF
+    viewer.scene.primitives.add(currentContourLayer);
+});
+
+
+
+///..............................................
+let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
+
 document.getElementById('contourBtn').addEventListener('click', async function() {
-    isContourVisible = !isContourVisible;
-    this.innerText = `Tampilkan Kontur: ${isContourVisible ? 'ON' : 'OFF'}`;
-    this.style.background = isContourVisible ? '#e74c3c' : '#2c3e50';
+    const holeId = document.getElementById('holeSelect').value;
+    if (!holeId) return alert("Silakan pilih Hole terlebih dahulu!");
 
-    try {
-        if (!contourDataSource) {
-            console.log("Loading Contour with Elevation Grading...");
-            const resource = await Cesium.IonResource.fromAssetId(4406299);
-            contourDataSource = await Cesium.GeoJsonDataSource.load(resource, {clampToGround: true });
+    const data = holeData[holeId];
+    isContourOn = !isContourOn;
 
-            const entities = contourDataSource.entities.values;
-            let minH = Infinity, maxH = -Infinity;
+    if (isContourOn) {
+        this.textContent = "Matikan Kontur";
+        this.style.backgroundColor = "#e74c3c";
 
-            // Tahap 1: Scan Min/Max Elevation
-            entities.forEach(e => {
-                const h = e.properties.Kontur ? parseFloat(e.properties.Kontur.getValue()) : null;
-                if (h !== null && !isNaN(h)) {
-                    if (h < minH) minH = h;
-                    if (h > maxH) maxH = h;
-                }
+        try {
+            const resource = await Cesium.IonResource.fromAssetId(data.contourAssetId);
+            currentContourDataSource = await Cesium.GeoJsonDataSource.load(resource, {
+                clampToGround: true // Menempel pada Tileset/Terrain
             });
 
-            // Tahap 2: Apply Gradasi Biru (Rendah) ke Merah (Tinggi) & Label
-            // ... (Bagian Scan Min/Max tetap sama) ...
+            const entities = currentContourDataSource.entities.values;
 
-    entities.forEach(e => {
+            // 1. Ambil semua nilai dari properti "Kontur" untuk mencari Min & Max
+            const heights = entities.map(e => {
+                return e.properties.Kontur ? parseFloat(e.properties.Kontur.getValue()) : 0;
+            });
+            const minH = Math.min(...heights);
+            const maxH = Math.max(...heights);
+
+            // 2. Beri warna gradasi dan label pada setiap entitas
+                entities.forEach(e => {
         const h = e.properties.Kontur ? parseFloat(e.properties.Kontur.getValue()) : 0;
         let ratio = (h - minH) / (maxH - minH);
         if (isNaN(ratio)) ratio = 0;
@@ -398,17 +451,52 @@ document.getElementById('contourBtn').addEventListener('click', async function()
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                 // heightReference sangat penting agar tidak tenggelam di bawah terrain
                     heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND, 
-                    eyeOffset: new Cesium.ConstantProperty(new Cesium.Cartesian3(0, 0, 0)), // Memaksa label tampil sedikit di depan garis
+                    eyeOffset: new Cesium.ConstantProperty(new Cesium.Cartesian3(0, 0, -1)), // Memaksa label tampil sedikit di depan garis
                     disableDepthTestDistance: Number.POSITIVE_INFINITY, // Label tembus pandang terhadap objek lain
-                    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 150)
+                    distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 50)
                     };
                 }
             }
-        });
         }
+        //---------------------------------
+        );
 
-        isContourVisible ? viewer.dataSources.add(contourDataSource) : viewer.dataSources.remove(contourDataSource);
-    } catch (err) { console.error("Contour Load Error:", err); }
+            await viewer.dataSources.add(currentContourDataSource);
+        } catch (error) {
+            console.error("Gagal memuat kontur:", error);
+        }
+    } else {
+        this.textContent = "Tampilkan Kontur";
+        this.style.backgroundColor = "";
+        if (currentContourDataSource) {
+            viewer.dataSources.remove(currentContourDataSource);
+            currentContourDataSource = null;
+        }
+    }
+});
+
+function getColorFromHeight(height, min, max) {
+    // Jika semua garis punya tinggi yang sama, gunakan warna tengah (ungu/hijau)
+    if (max === min) return Cesium.Color.CYAN.withAlpha(0.8);
+    
+    const ratio = (height - min) / (max - min);
+    // Interpolasi: Biru (rendah) -> Ungu -> Merah (tinggi)
+    return new Cesium.Color(ratio, 0, 1 - ratio, 0.8);
+}
+
+document.getElementById('holeSelect').addEventListener('change', function() {
+    // Hapus GeoJSON lama
+    if (currentContourDataSource) {
+        viewer.dataSources.remove(currentContourDataSource);
+        currentContourDataSource = null;
+    }
+    
+    // Reset status tombol
+    isContourOn = false;
+    document.getElementById('contourBtn').textContent = "Tampilkan Kontur";
+    document.getElementById('contourBtn').style.backgroundColor = "";
+
+    // Fly to hole area...
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
@@ -424,3 +512,74 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     }
 });
 
+document.getElementById('saveTrackBtn').addEventListener('click', () => {
+    const holeId = document.getElementById('holeSelect').value;
+    if (!holeId) return alert("Pilih Hole terlebih dahulu!");
+    if (activePoints.length === 0) return alert("Belum ada titik untuk disimpan.");
+
+    // Ambil data koordinat
+    const trackPoints = activePoints.map(p => {
+        const carto = Cesium.Cartographic.fromCartesian(p.position);
+        return {
+            lat: Cesium.Math.toDegrees(carto.latitude),
+            lng: Cesium.Math.toDegrees(carto.longitude),
+            height: carto.height
+        };
+    });
+
+    // Buat objek data dengan tanggal
+    const newEntry = {
+        id: Date.now(), // ID unik berdasarkan waktu
+        date: new Date().toLocaleString('id-ID'),
+        hole: holeId,
+        points: trackPoints
+    };
+
+    // Ambil database lama dari localStorage atau buat baru jika kosong
+    let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    allTracks.push(newEntry);
+
+    // Simpan kembali
+    localStorage.setItem('golf_tracks', JSON.stringify(allTracks));
+    alert(`Track Hole ${holeId} berhasil disimpan!`);
+});
+
+document.getElementById('historyBtn').addEventListener('click', () => {
+    let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    if (allTracks.length === 0) return alert("Belum ada riwayat tersimpan.");
+
+    // Buat daftar sederhana untuk dipilih
+    let message = "Pilih Riwayat (Ketik nomor urut):\n";
+    allTracks.forEach((t, index) => {
+        message += `${index + 1}. Hole ${t.hole} - ${t.date}\n`;
+    });
+
+    const choice = prompt(message);
+    const selectedTrack = allTracks[parseInt(choice) - 1];
+
+    if (selectedTrack) {
+        // Bersihkan peta dulu sebelum memuat riwayat
+        clearAll(); // Pastikan fungsi clearAll() Anda sudah menghapus activePoints
+
+        selectedTrack.points.forEach(p => {
+            const position = Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.height);
+            
+            // Re-create titik di peta
+            const v = viewer.entities.add({
+                position: position,
+                point: { 
+                    pixelSize: 20, 
+                    color: Cesium.Color.YELLOW, // Warna beda untuk membedakan dengan titik baru
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY 
+                }
+            });
+            activePoints.push({ position: position, entity: v });
+        });
+        
+        // Update garis dan label jarak
+        updateVisuals();
+        alert(`Memuat Track Hole ${selectedTrack.hole} tanggal ${selectedTrack.date}`);
+    }
+});
