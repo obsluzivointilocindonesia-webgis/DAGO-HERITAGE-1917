@@ -11,10 +11,32 @@ body, html, #cesiumContainer {
     padding: 10px 20px; cursor: pointer; border: none; 
     border-radius: 5px; font-weight: bold; color: white;
     transition: 0.3s;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
 }
 
 .btn-navy { background: #000080; }
 .btn-dark { background: #2c3e50; }
+
+@media screen and (max-width: 768px) {
+    .btn {
+        padding: 15px 25px; /* Area klik lebih luas */
+        font-size: 18px;    /* Tulisan lebih besar */
+        margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        width: 90%;         /* Opsional: Tombol melebar hampir memenuhi layar */
+        display: block;     /* Membuat tombol berderet ke bawah */
+    }
+
+    /* Jika tombol berada dalam satu container/wadah */
+    #toolbar {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%); /* Posisikan di tengah atas layar HP */
+        width: 100%;
+        text-align: center;
+    }
+}
 
 #toolbar-info {
     background-color: rgba(255, 255, 255, 0.8);
@@ -34,3 +56,4 @@ body, html, #cesiumContainer {
 #cesiumContainer {
     touch-action: none; /* Mencegah browser melakukan scroll saat kita menyentuh map */
 }
+
