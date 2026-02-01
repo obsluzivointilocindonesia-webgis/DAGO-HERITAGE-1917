@@ -4,6 +4,7 @@ Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 const viewer = new Cesium.Viewer('cesiumContainer', {
     terrain: Cesium.Terrain.fromWorldTerrain(),
 });
+viewer.scene.globe.depthTestAgainstTerrain = true;
 
 let activePoints = []; 
 let labelsList = []; // Untuk menyimpan label agar mudah dihapus
@@ -18,18 +19,84 @@ async function init() {
     try {
         const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(4406223);
         viewer.scene.primitives.add(tileset);
+        tileset.classificationType = Cesium.ClassificationType.BOTH;
         viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(107.6258056, -6.8698692729, 990),
             orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-15.0), roll: 0.0 },
             duration: 2
-        });
-
-        const resource1 = await Cesium.IonResource.fromAssetId(4406181);
-        dataSource1 = await Cesium.GeoJsonDataSource.load(resource1, {clampToGround: true });
-        await viewer.dataSources.add(dataSource1);
+        });    
     } catch (e) { console.error(e); }
 }
 init();
+async function loadHoles() {
+    try {
+        const holeResource = await Cesium.IonResource.fromAssetId(4408863);
+        const holeDataSource = await Cesium.GeoJsonDataSource.load(holeResource);
+        await viewer.dataSources.add(holeDataSource);
+
+        const entities = holeDataSource.entities.values;
+        const triangleCanvas = createTriangleCanvas('#FF0000');
+
+        entities.forEach(entity => {
+            // Ambil posisi asli dari GeoJSON (Cartographic)
+            const position = entity.position.getValue(viewer.clock.currentTime);
+            
+            // PAKSA MENEMPEL KE TILESET
+            // Kita gunakan properti disableDepthTestDistance agar tidak tenggelam di bawah tileset
+            entity.billboard = {
+                image: triangleCanvas,
+                width: 30,
+                height: 30,
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND, // Berubah ke Relative
+                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                disableDepthTestDistance: Number.POSITIVE_INFINITY // INI KUNCINYA: Menembus permukaan agar selalu terlihat di atas Tileset
+            };
+
+            entity.label = {
+                text: `HOLE ${entity.properties.HoleNo}\nPAR ${entity.properties.PAR}`,
+                font: 'bold 16pt "Arial Black", Gadget, sans-serif',
+                fillColor: Cesium.Color.WHITE,
+                outlineColor: Cesium.Color.BLACK,
+                outlineWidth: 3,
+                style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                pixelOffset: new Cesium.Cartesian2(0, -50),
+                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                disableDepthTestDistance: Number.POSITIVE_INFINITY
+            };
+        });
+
+    } catch (e) {
+        console.error("Gagal memuat hole:", e);
+    }
+}
+loadHoles();
+
+// logo hole triangle
+function createTriangleCanvas(colorStr) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    // Bersihkan canvas
+    ctx.clearRect(0, 0, 64, 64);
+
+    // Gambar Segitiga
+    ctx.beginPath();
+    ctx.moveTo(32, 5);   // Puncak segitiga
+    ctx.lineTo(60, 58);  // Kanan bawah
+    ctx.lineTo(4, 58);   // Kiri bawah
+    ctx.closePath();
+
+    ctx.fillStyle = colorStr;
+    ctx.fill();
+    
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    return canvas;
+}
 
 // 3. FUNGSI PERHITUNGAN BEARING
 function getBearing(start, end) {
@@ -123,7 +190,7 @@ function updateVisuals() {
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
 const viewerControls = viewer.scene.screenSpaceCameraController;
 
-// 1. FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
+// FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
     
     const infoBox = document.getElementById('toolbar-info');
@@ -151,7 +218,7 @@ handler.setInputAction(async function (movement) {
     updateVisuals();
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-// 2. MULAI GESER (Support Mouse Down & Touch Start)
+// MULAI GESER (Support Mouse Down & Touch Start)
 // Di mobile, LEFT_DOWN otomatis terpicu saat jari menyentuh layar
 handler.setInputAction(function(click) {
     const pickedObject = viewer.scene.pick(click.position);
@@ -164,7 +231,7 @@ handler.setInputAction(function(click) {
     }
 }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
 
-// 3. PROSES GESER (Support Mouse Move & Touch Move)
+// PROSES GESER (Support Mouse Move & Touch Move)
 handler.setInputAction(function(movement) {
     if (isDragging && draggedEntity) {
         // Gunakan endPosition untuk posisi jari/mouse terbaru
@@ -181,7 +248,7 @@ handler.setInputAction(function(movement) {
     }
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-// 4. SELESAI GESER (Support Mouse Up & Touch End)
+// SELESAI GESER (Support Mouse Up & Touch End)
 handler.setInputAction(function() {
     if (isDragging) {
         isDragging = false;
@@ -193,6 +260,34 @@ handler.setInputAction(function() {
         generateMultiPointProfile();
     }
 }, Cesium.ScreenSpaceEventType.LEFT_UP);
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+    if (activePoints.length === 0) return;
+
+    // 1. Ambil data titik terakhir
+    const lastPoint = activePoints.pop();
+
+    // 2. Hapus entitas titik dari peta
+    viewer.entities.remove(lastPoint.entity);
+
+    // 3. Jika setelah dihapus titik sisa kurang dari 2, hapus garis dan grafik
+    if (activePoints.length < 2) {
+        if (viewer.entities.getById('dynamicLine')) {
+            viewer.entities.removeById('dynamicLine');
+        }
+        if (profileChart) profileChart.destroy();
+        document.getElementById('chartContainer').style.display = 'none';
+        
+        // Munculkan kembali instruksi jika semua titik habis
+        if (activePoints.length === 0) {
+            document.getElementById('toolbar-info').style.display = 'block';
+        }
+    }
+
+    // 4. Update visual (garis dan label) untuk titik yang tersisa
+    updateVisuals();
+});
+
 
 // 6. MULTI-POINT PROFILE
 async function generateMultiPointProfile() {
@@ -328,3 +423,4 @@ document.getElementById('clearBtn').addEventListener('click', () => {
         infoBox.style.display = 'block'; 
     }
 });
+

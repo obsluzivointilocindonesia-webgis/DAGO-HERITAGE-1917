@@ -16,13 +16,22 @@ body, html, #cesiumContainer {
     cursor: pointer;
 }
 
+.menu-button {
+    padding: 10px 20px; cursor: pointer; border: none; 
+    border-radius: 5px; font-weight: bold; color: white;
+    transition: 0.3s;
+    font-size: 16px;
+    margin: 5px;
+    cursor: pointer;
+}
+
 .btn-navy { background: #000080; }
 .btn-dark { background: #2c3e50; }
 
 @media screen and (max-width: 768px) {
     .btn {
         padding: 10px 20px; /* Area klik lebih luas */
-        font-size: 14px;    /* Tulisan lebih besar */
+        font-size: 12px;    /* Tulisan lebih besar */
         margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
