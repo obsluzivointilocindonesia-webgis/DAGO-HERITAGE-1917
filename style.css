@@ -31,3 +31,6 @@ body, html, #cesiumContainer {
     display: none; z-index: 1000;
     box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
+#cesiumContainer {
+    touch-action: none; /* Mencegah browser melakukan scroll saat kita menyentuh map */
+}

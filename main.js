@@ -27,7 +27,6 @@ async function init() {
         const resource1 = await Cesium.IonResource.fromAssetId(4406181);
         dataSource1 = await Cesium.GeoJsonDataSource.load(resource1, {clampToGround: true });
         await viewer.dataSources.add(dataSource1);
-        //await viewer.zoomTo(dataSource1);
     } catch (e) { console.error(e); }
 }
 init();
@@ -119,65 +118,76 @@ function updateVisuals() {
     generateMultiPointProfile();
 }
 // 5. EVENT HANDLER KLIK
+// --- REVISI EVENT HANDLER UNTUK SUPPORT HP & DESKTOP ---
+
 const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+const viewerControls = viewer.scene.screenSpaceCameraController;
+
+// 1. FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
+    // Jika sedang nge-drag, jangan buat titik baru
+    if (isDragging) return;
+
     const cartesian = viewer.scene.pickPosition(movement.position);
     if (!Cesium.defined(cartesian)) return;
 
     const v = viewer.entities.add({
         position: cartesian,
-        point: { pixelSize: 8, color: Cesium.Color.GREEN, disableDepthTestDistance: Number.POSITIVE_INFINITY }
+        point: { 
+            pixelSize: 20, // Diperbesar agar mudah di-tap di HP
+            color: Cesium.Color.GREEN, 
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 3,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY 
+        }
     });
     
     activePoints.push({ position: cartesian, entity: v });
     updateVisuals();
 }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-// 1. Matikan kontrol kamera default agar tidak ikut bergeser saat kita drag titik
-const viewerControls = viewer.scene.screenSpaceCameraController;
-
-// 2. Event Handler: Tekan Mouse (Pilih titik)
+// 2. MULAI GESER (Support Mouse Down & Touch Start)
+// Di mobile, LEFT_DOWN otomatis terpicu saat jari menyentuh layar
 handler.setInputAction(function(click) {
     const pickedObject = viewer.scene.pick(click.position);
-    if (Cesium.defined(pickedObject) && pickedObject.id.point) {
+    if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.point) {
         isDragging = true;
         draggedEntity = pickedObject.id;
-        viewerControls.enableInputs = false; // Kunci kamera
+        
+        // KUNCI KAMERA: Sangat penting di HP agar layar tidak ikut goyang saat geser titik
+        viewerControls.enableInputs = false; 
     }
 }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
 
-// 3. Event Handler: Gerakkan Mouse (Proses Geser)
+// 3. PROSES GESER (Support Mouse Move & Touch Move)
 handler.setInputAction(function(movement) {
     if (isDragging && draggedEntity) {
-        // Gunakan pickPosition untuk akurasi pada Terrain/Tileset
+        // Gunakan endPosition untuk posisi jari/mouse terbaru
         const cartesian = viewer.scene.pickPosition(movement.endPosition);
         if (Cesium.defined(cartesian)) {
             draggedEntity.position = cartesian;
             
-            // Update koordinat di array utama
+            // Update data di array agar garis ikut bergerak
             const pointData = activePoints.find(p => p.entity === draggedEntity);
             if (pointData) pointData.position = cartesian;
-            
+
             updateVisuals(); 
-            viewer.scene.requestRender(); 
         }
     }
 }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-// 4. Event Handler: Lepas Mouse (Selesai geser)
+// 4. SELESAI GESER (Support Mouse Up & Touch End)
 handler.setInputAction(function() {
     if (isDragging) {
         isDragging = false;
         draggedEntity = null;
-        viewerControls.enableInputs = true; // Lepas kunci kamera
         
-        // Update grafik profil hanya setelah selesai menggeser (hemat baterai HP)
+        // AKTIFKAN KEMBALI KAMERA
+        viewerControls.enableInputs = true; 
+        
         generateMultiPointProfile();
     }
 }, Cesium.ScreenSpaceEventType.LEFT_UP);
-//
-//
-
 
 // 6. MULTI-POINT PROFILE
 async function generateMultiPointProfile() {
