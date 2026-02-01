@@ -32,7 +32,7 @@ body, html, #cesiumContainer {
     .btn {
         padding: 10px 20px; /* Area klik lebih luas */
         font-size: 12px;    /* Tulisan lebih besar */
-        margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        margin: 5px 5px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
     }
@@ -40,7 +40,7 @@ body, html, #cesiumContainer {
     .menu-button {
         padding: 10px 20px; /* Area klik lebih luas */
         font-size: 12px;    /* Tulisan lebih besar */
-        margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        margin: 5px 5px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
     }
@@ -53,7 +53,7 @@ body, html, #cesiumContainer {
         text-align: center;
     }
     .chart-wrapper {
-        height: 100px; /* Lebih pendek di HP */
+        height: 80px; /* Lebih pendek di HP */
     }
 }
 
@@ -68,8 +68,8 @@ body, html, #cesiumContainer {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 60%;
-    background: rgba(255, 255, 255, 0.9); /* Putih transparan */
+    width: 100%;
+    background: rgba(255, 255, 255, 0.8); /* Putih transparan */
     z-index: 1000;
     display: none; /* Muncul hanya saat ada data */
     padding: 10px;
