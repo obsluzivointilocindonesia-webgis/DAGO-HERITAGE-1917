@@ -398,7 +398,7 @@ document.getElementById('contourBtn').addEventListener('click', async function()
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                 // heightReference sangat penting agar tidak tenggelam di bawah terrain
                     heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND, 
-                    eyeOffset: new Cesium.ConstantProperty(new Cesium.Cartesian3(0, 0, -1)), // Memaksa label tampil sedikit di depan garis
+                    eyeOffset: new Cesium.ConstantProperty(new Cesium.Cartesian3(0, 0, 0)), // Memaksa label tampil sedikit di depan garis
                     disableDepthTestDistance: Number.POSITIVE_INFINITY, // Label tembus pandang terhadap objek lain
                     distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 150)
                     };

@@ -72,9 +72,11 @@ body, html, #cesiumContainer {
     background: rgba(255, 255, 255, 0.8); /* Putih transparan */
     z-index: 1000;
     display: none; /* Muncul hanya saat ada data */
-    padding: 10px;
+    padding: 2px;
     box-sizing: border-box;
     border-top: 2px solid #ccc;
+    max-height: 80;
+    overflow-y: auto;
 }
 
 .chart-wrapper {
