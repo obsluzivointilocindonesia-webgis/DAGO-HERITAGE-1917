@@ -37,6 +37,13 @@ body, html, #cesiumContainer {
         display: block;     /* Membuat tombol berderet ke bawah */
     }
 
+    .menu-button {
+        padding: 10px 20px; /* Area klik lebih luas */
+        font-size: 12px;    /* Tulisan lebih besar */
+        margin: 10px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
+        display: block;     /* Membuat tombol berderet ke bawah */
+    }
     /* Jika tombol berada dalam satu container/wadah */
     #toolbar {
         top: 10px;
@@ -46,7 +53,7 @@ body, html, #cesiumContainer {
         text-align: center;
     }
     .chart-wrapper {
-        height: 150px; /* Lebih pendek di HP */
+        height: 100px; /* Lebih pendek di HP */
     }
 }
 
