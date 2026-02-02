@@ -55,7 +55,7 @@ body, html, #cesiumContainer {
 
     .menu-button {
         padding: 10px 10px; /* Area klik lebih luas */
-        font-size: 12px;    /* Tulisan lebih besar */
+        font-size: 10px;    /* Tulisan lebih besar */
         margin: 1px 2px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
@@ -76,13 +76,13 @@ body, html, #cesiumContainer {
     }
 
     .summary-card {
-        width: 50%;
+        width: 20%;
         max-width: none;
-        padding: 10px;
+        padding: 1px;
     }
 
     .summary-grid {
-        grid-template-columns: 1fr; /* tetap 2 kolom */
+        grid-template-columns: 1fr 1fr; /* tetap 2 kolom */
         gap: 6px;
     }
 
