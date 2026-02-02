@@ -15,8 +15,10 @@ let isDragging = false;
 let draggedEntity = null;
 let currentContourTileset = null; // Menyimpan tileset kontur yang sedang aktif
 let isContourOn = false;         // Status tombol ON/OFF
+let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
+let currentContourLayer = null;
 
-// 2. LOAD ASSET
+// 2. LOAD ASSET TILESET
 async function init() {
     try {
         const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(4406223);
@@ -332,7 +334,7 @@ function renderChart(labels, data) {
         data: {
             labels: labels,
             datasets: [{
-                label: 'Elevasi Kumulatif (m)',
+                label: 'Beda Tinggi Kumulatif (m)',
                 data: data,
                 borderColor: '#2ecc71',
                 backgroundColor: 'rgba(46, 204, 113, 0.2)',
@@ -346,6 +348,7 @@ function renderChart(labels, data) {
 }
 
 // 7. KONTUR & CLEAR
+// VIEWER PER HOLE dan LOAD DATA ASSET KONTUR
 const holeData = {
  "1": {//-6.868553594615521, 107.62457935894973;  4406266
         center: Cesium.Cartesian3.fromDegrees(107.6245793589, -6.86855359, 1000), // Koordinat Hole 1
@@ -362,10 +365,99 @@ const holeData = {
         center: Cesium.Cartesian3.fromDegrees(107.6244687, -6.8697840, 950),
         contourAssetId: 4406268,
         heading: 200, pitch: -45, roll:0
+    },
+
+    "4": {//-6.8715004,107.6247602 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6247602, -6.8715004, 1050),
+        contourAssetId: 4406269,
+        heading: 180, pitch: -55, roll:0
+    },
+
+    "5": {//-6.8732492,107.6243212 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6243212, -6.8732492, 950),
+        contourAssetId: 4406270,
+        heading: 200, pitch: -45, roll:0
+    },
+
+    "6": {//-6.8739832,107.6250553 
+        center: Cesium.Cartesian3.fromDegrees(107.6250553, -6.8739832, 950),
+        contourAssetId: 4406272,
+        heading: 120, pitch: -55, roll:0
+    },
+
+    "7": {//-6.8735298,107.62570297 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.62570297, -6.8735298, 950),
+        contourAssetId: 4406273,
+        heading: 270, pitch: -60, roll:0
+    },
+
+    "8": {//-6.8716947,107.6251632 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6251632, -6.8716947, 950),
+        contourAssetId: 4406274,
+        heading: 355, pitch: -45, roll:0
+    },
+
+    "9": {//-6.8690032,107.6250409 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6250409, -6.8690032, 1050),
+        contourAssetId: 4406275,
+        heading: 19, pitch: -65, roll:0
+    },
+
+    "10": {//-6.8692191,107.6254655 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6254655, -6.8692191, 950),
+        contourAssetId: 4406276,
+        heading: 190, pitch: -50, roll:0
+    },
+
+    "11": {//-6.8710111,107.6255662 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6255662, -6.8710111, 950),
+        contourAssetId: 4406277,
+        heading: 168, pitch: -55, roll:0
+    },
+
+    "12": {//-6.8693631,107.6258397 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6258397, -6.8693631, 980),
+        contourAssetId: 4406278,
+        heading: 3, pitch: -45, roll:0
+    },
+
+    "13": {//-6.8693127,107.6262355 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6262355, -6.8693127, 980),
+        contourAssetId: 4406279,
+        heading: 185, pitch: -45, roll:0
+    },
+
+    "14": {//-6.8729829,107.6259116 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6259116, -6.8729829, 940),
+        contourAssetId: 4406280,
+        heading: 150, pitch: -45, roll:0
+    },
+
+    "15": {//-6.8742549,107.6269605 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6269605, -6.8742549, 930),
+        contourAssetId: 4406281,
+        heading: 160, pitch: -78, roll:0
+    },
+
+    "16": {//-6.8734561,107.6265773 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6265773, -6.8734561, 950),
+        contourAssetId: 4406282,
+        heading: 10, pitch: -60, roll:0
+    },
+
+    "17": {//-6.8712539,107.6268688 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6268688, -6.8712539, 950),
+        contourAssetId: 4406283,
+        heading: 10, pitch: -43, roll:0
+    },
+
+    "18": {//-6.8686092,107.6265665 ; 
+        center: Cesium.Cartesian3.fromDegrees(107.6265665, -6.8686092, 1000),
+        contourAssetId: 4406284,
+        heading: 348, pitch: -43, roll:0
     }
 };
 
-//let currentContourLayer = null;
 
 document.getElementById('holeSelect').addEventListener('change', async (e) => {
     const id = e.target.value;
@@ -391,10 +483,7 @@ document.getElementById('holeSelect').addEventListener('change', async (e) => {
     viewer.scene.primitives.add(currentContourLayer);
 });
 
-
-
 ///..............................................
-let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
 
 document.getElementById('contourBtn').addEventListener('click', async function() {
     const holeId = document.getElementById('holeSelect').value;
@@ -512,12 +601,38 @@ document.getElementById('clearBtn').addEventListener('click', () => {
     }
 });
 
+//----------------------------------------------
+
 document.getElementById('saveTrackBtn').addEventListener('click', () => {
     const holeId = document.getElementById('holeSelect').value;
     if (!holeId) return alert("Pilih Hole terlebih dahulu!");
-    if (activePoints.length === 0) return alert("Belum ada titik untuk disimpan.");
+    if (activePoints.length < 2) return alert("Minimal harus ada 2 titik (1 pukulan) untuk menyimpan track.");
 
-    // Ambil data koordinat
+    // 1. Ambil data PAR dari GeoJSON yang sudah ter-load
+    let holePar = 0;
+    const dataSources = viewer.dataSources;
+    for (let i = 0; i < dataSources.length; i++) {
+        const ds = dataSources.get(i);
+        const entity = ds.entities.values.find(e => e.properties && e.properties.HoleNo && e.properties.HoleNo.getValue() == holeId);
+        if (entity && entity.properties.PAR) {
+            holePar = parseInt(entity.properties.PAR.getValue());
+            break;
+        }
+    }
+
+    // 2. Hitung jumlah pukulan berdasarkan jumlah titik
+    // Rumus: Strokes = Jumlah Titik - 1 (Titik awal tidak dihitung sebagai pukulan)
+    const autoStrokes = activePoints.length - 1;
+
+    // 3. Konfirmasi ke user
+    const confirmStrokes = prompt(`Hole ${holeId} (PAR ${holePar})\nTerdeteksi ${autoStrokes} pukulan.\n\nApakah jumlah ini sudah benar? (Jika salah, masukkan angka yang benar):`, autoStrokes);
+    
+    if (confirmStrokes === null) return; // Batal simpan jika tekan Cancel
+
+    const finalStrokes = parseInt(confirmStrokes);
+    const scoreTerm = getGolfTerm(finalStrokes, holePar);
+
+    // 4. Siapkan data titik koordinat
     const trackPoints = activePoints.map(p => {
         const carto = Cesium.Cartographic.fromCartesian(p.position);
         return {
@@ -527,49 +642,71 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
         };
     });
 
-    // Buat objek data dengan tanggal
+    // 5. Simpan ke LocalStorage
     const newEntry = {
-        id: Date.now(), // ID unik berdasarkan waktu
+        id: Date.now(),
         date: new Date().toLocaleString('id-ID'),
         hole: holeId,
+        par: holePar,
+        strokes: finalStrokes,
+        scoreTerm: scoreTerm,
         points: trackPoints
     };
 
-    // Ambil database lama dari localStorage atau buat baru jika kosong
     let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
     allTracks.push(newEntry);
-
-    // Simpan kembali
     localStorage.setItem('golf_tracks', JSON.stringify(allTracks));
-    alert(`Track Hole ${holeId} berhasil disimpan!`);
+
+    // Update UI Skor
+    document.getElementById('current-score-text').textContent = `${finalStrokes} Strokes (${scoreTerm})`;
+    
+    alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
 });
 
+//-------------------------------------------------------
+function clearAll() {
+    // Hapus semua entitas titik
+    activePoints.forEach(p => viewer.entities.remove(p.entity));
+    // Hapus semua label
+    labelsList.forEach(l => viewer.entities.remove(l));
+    // Hapus garis
+    if (viewer.entities.getById('dynamicLine')) {
+        viewer.entities.removeById('dynamicLine');
+    }
+    // Reset array
+    activePoints = [];
+    labelsList = [];
+    // Sembunyikan chart
+    if (profileChart) profileChart.destroy();
+    document.getElementById('chartContainer').style.display = 'none';
+}
+
+//--------------------------------------------------------
 document.getElementById('historyBtn').addEventListener('click', () => {
     let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
     if (allTracks.length === 0) return alert("Belum ada riwayat tersimpan.");
 
-    // Buat daftar sederhana untuk dipilih
     let message = "Pilih Riwayat (Ketik nomor urut):\n";
     allTracks.forEach((t, index) => {
         message += `${index + 1}. Hole ${t.hole} - ${t.date}\n`;
     });
 
     const choice = prompt(message);
-    const selectedTrack = allTracks[parseInt(choice) - 1];
+    const index = parseInt(choice) - 1;
+    const selectedTrack = allTracks[index];
 
     if (selectedTrack) {
-        // Bersihkan peta dulu sebelum memuat riwayat
-        clearAll(); // Pastikan fungsi clearAll() Anda sudah menghapus activePoints
+        clearAll(); // Sekarang fungsi ini sudah ada
 
         selectedTrack.points.forEach(p => {
+            // Gunakan Cartesian3 dari derajat yang disimpan
             const position = Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.height);
             
-            // Re-create titik di peta
             const v = viewer.entities.add({
                 position: position,
                 point: { 
                     pixelSize: 20, 
-                    color: Cesium.Color.YELLOW, // Warna beda untuk membedakan dengan titik baru
+                    color: Cesium.Color.YELLOW, 
                     outlineColor: Cesium.Color.BLACK,
                     outlineWidth: 2,
                     disableDepthTestDistance: Number.POSITIVE_INFINITY 
@@ -578,8 +715,107 @@ document.getElementById('historyBtn').addEventListener('click', () => {
             activePoints.push({ position: position, entity: v });
         });
         
-        // Update garis dan label jarak
+        // PENTING: Update kamera ke lokasi track agar langsung terlihat
+        if (activePoints.length > 0) {
+            viewer.zoomTo(activePoints.map(p => p.entity));
+        }
+        //-----------------------
+        document.getElementById('current-score-text').textContent = 
+    `${selectedTrack.strokes} Strokes (${selectedTrack.scoreTerm || 'N/A'}) - PAR ${selectedTrack.par}`;
+
         updateVisuals();
-        alert(`Memuat Track Hole ${selectedTrack.hole} tanggal ${selectedTrack.date}`);
+        alert(`Memuat Track Hole ${selectedTrack.hole}`);
     }
 });
+
+// Fungsi untuk menghapus SEMUA atau SALAH SATU riwayat
+function deleteTrackHistory() {
+    let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    if (allTracks.length === 0) return alert("Tidak ada data untuk dihapus.");
+
+    let message = "Ketik nomor track yang ingin DIHAPUS (atau ketik 'ALL' untuk hapus semua):\n";
+    allTracks.forEach((t, index) => {
+        message += `${index + 1}. Hole ${t.hole} - ${t.date}\n`;
+    });
+
+    const choice = prompt(message);
+    
+    if (choice === null) return; // User tekan cancel
+
+    if (choice.toUpperCase() === 'ALL') {
+        if (confirm("Hapus semua riwayat?")) {
+            localStorage.removeItem('golf_tracks');
+            alert("Semua riwayat telah dihapus.");
+        }
+    } else {
+        const index = parseInt(choice) - 1;
+        if (allTracks[index]) {
+            const removed = allTracks.splice(index, 1);
+            localStorage.setItem('golf_tracks', JSON.stringify(allTracks));
+            alert(`Track Hole ${removed[0].hole} berhasil dihapus.`);
+        } else {
+            alert("Nomor tidak valid.");
+        }
+    }
+}
+
+// 8. FUNGSI HAPUS RIWAYAT
+document.getElementById('deleteHistoryBtn').addEventListener('click', () => {
+    let allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    
+    if (allTracks.length === 0) {
+        return alert("Tidak ada riwayat untuk dihapus.");
+    }
+
+    // Buat daftar riwayat untuk dipilih
+    let message = "Ketik nomor track yang ingin DIHAPUS (atau ketik 'ALL' untuk hapus semua):\n";
+    allTracks.forEach((t, index) => {
+        message += `${index + 1}. Hole ${t.hole} - ${t.date}\n`;
+    });
+
+    const choice = prompt(message);
+    
+    // Jika user klik 'Cancel'
+    if (choice === null) return; 
+
+    if (choice.toUpperCase() === 'ALL') {
+        if (confirm("Apakah Anda yakin ingin menghapus SEMUA riwayat?")) {
+            localStorage.removeItem('golf_tracks');
+            clearAll(); // Bersihkan peta juga
+            alert("Semua riwayat telah dihapus.");
+        }
+    } else {
+        const index = parseInt(choice) - 1;
+        if (!isNaN(index) && allTracks[index]) {
+            const removedHole = allTracks[index].hole;
+            const removedDate = allTracks[index].date;
+            
+            // Hapus satu item dari array
+            allTracks.splice(index, 1);
+            
+            // Simpan kembali ke localStorage
+            localStorage.setItem('golf_tracks', JSON.stringify(allTracks));
+            
+            // Opsional: Jika track yang dihapus adalah yang sedang tampil, bersihkan peta
+            clearAll(); 
+            
+            alert(`Riwayat Hole ${removedHole} (${removedDate}) berhasil dihapus.`);
+        } else {
+            alert("Nomor tidak valid atau tidak ditemukan.");
+        }
+    }
+});
+
+function getGolfTerm(strokes, par) {
+    const diff = strokes - par;
+    const terms = {
+        "-3": "Albatross",
+        "-2": "Eagle",
+        "-1": "Birdie",
+        "0": "Par",
+        "1": "Bogey",
+        "2": "Double Bogey",
+        "3": "Triple Bogey"
+    };
+    return terms[diff] || (diff > 0 ? `+${diff} Strokes` : `${diff} Strokes`);
+}

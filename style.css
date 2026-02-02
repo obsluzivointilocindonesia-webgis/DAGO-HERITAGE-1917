@@ -41,7 +41,7 @@ body, html, #cesiumContainer {
         padding: 10px 20px; 
         font-size: 12px;
         margin: 5px;
-        width: 80%;
+        width: 50%;
         display: block;
     }
 
@@ -69,8 +69,9 @@ body, html, #cesiumContainer {
         text-align: center;
     }
     .chart-wrapper {
-        height: 80px; /* Lebih pendek di HP */
+        height: 50px; /* Lebih pendek di HP */
     }
+    
 }
 
 #toolbar-info {
