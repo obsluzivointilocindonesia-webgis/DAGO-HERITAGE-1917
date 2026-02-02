@@ -81,8 +81,7 @@ body, html, #cesiumContainer {
     }
 
     .summary-grid {
-        grid-template-columns: 1fr 1fr; /* tetap 2 kolom */
-        gap: 6px;
+        grid-template-columns: 1fr;
     }
 
     .label {
