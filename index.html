@@ -46,8 +46,28 @@
         <button id="saveTrackBtn" class="menu-button" style="background-color: #27ae60;">Simpan Track</button>
         <button id="historyBtn" class="menu-button" style="background-color: #2980b9;">Riwayat Track</button>
         <button id="deleteHistoryBtn" class="menu-button" style="background-color: #4a4f52;">Hapus Riwayat Track</button>
-        <div id="score-panel" style="background: rgba(0,0,0,0.7); padding: 10px; font-size: 18px; border-radius: 5px; color: white; margin-top: 5px;">
+        <div id="score-panel" style="background: rgba(0,0,0,0.7); padding: 10px; font-size: 18px; border-radius: 5px; color: white; margin-top: 1px;margin-bottom: 1px;">
         <strong>Skor Hole Ini: </strong> <span id="current-score-text">-</span>
+        <div id="score-summary-container" class="summary-card">
+        <h3>Rangkuman Scorecard</h3>
+            <button id="newGameBtn" class="menu-button" style="background-color: #192cbb;">Mulai Ronde Baru</button>
+        <hr>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="label">Total Strokes</span>
+                <span id="total-strokes-val" class="value">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Total PAR</span>
+                <span id="total-par-val" class="value">0</span>
+            </div>
+            <div class="summary-item">
+                <span class="label">Holes Played</span>
+                <span id="holes-played-val" class="value">0/18</span>
+            </div>
+        </div>
+    <div id="over-under-status" class="status-badge">Even</div>
+    </div>
 </div>
         <div id="toolbar-info">
             <strong>Instruksi:</strong><br>
@@ -57,5 +77,6 @@
         </div>
     </div>
     <script src="main.js"></script>
+
 </body>
 </html>

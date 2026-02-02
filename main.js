@@ -17,6 +17,14 @@ let currentContourTileset = null; // Menyimpan tileset kontur yang sedang aktif
 let isContourOn = false;         // Status tombol ON/OFF
 let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
 let currentContourLayer = null;
+// Cek apakah sudah ada ronde aktif di browser
+let currentRoundId = localStorage.getItem('current_round_id');
+
+// Jika belum ada (baru pertama kali buka aplikasi), buat satu ID awal
+if (!currentRoundId) {
+    currentRoundId = Date.now(); // Menggunakan timestamp sebagai ID unik
+    localStorage.setItem('current_round_id', currentRoundId);
+}
 
 // 2. LOAD ASSET TILESET
 async function init() {
@@ -602,7 +610,10 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 //----------------------------------------------
-
+document.addEventListener('DOMContentLoaded', () => {
+    updateSummaryScore();
+});
+//-----------------------------------------------
 document.getElementById('saveTrackBtn').addEventListener('click', () => {
     const holeId = document.getElementById('holeSelect').value;
     if (!holeId) return alert("Pilih Hole terlebih dahulu!");
@@ -645,6 +656,7 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
     // 5. Simpan ke LocalStorage
     const newEntry = {
         id: Date.now(),
+        roundId: localStorage.getItem('current_round_id'),
         date: new Date().toLocaleString('id-ID'),
         hole: holeId,
         par: holePar,
@@ -659,9 +671,110 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
 
     // Update UI Skor
     document.getElementById('current-score-text').textContent = `${finalStrokes} Strokes (${scoreTerm})`;
-    
+    updateSummaryScore();
     alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
+    
 });
+//new ronde
+// A. Fungsi untuk memulai ronde baru
+document.getElementById('newGameBtn').addEventListener('click', () => {
+    if (confirm("Mulai ronde baru? Skor pada scorecard akan direset, tapi log permainan tetap tersimpan.")) {
+        // Buat ID unik baru untuk ronde ini
+        const newRoundId = Date.now();
+        localStorage.setItem('current_round_id', newRoundId);
+        
+        // Refresh tampilan (akan jadi NOL karena ID ronde berubah)
+        updateSummaryUI();
+        
+        // Reset UI teks hole saat ini
+        document.getElementById('current-score-text').textContent = "-";
+        alert("Ronde baru dimulai!");
+    }
+});    
+
+function updateSummaryUI() {
+    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    const currentRoundId = localStorage.getItem('current_round_id');
+    
+    // FILTER: Hanya ambil track yang memiliki roundId yang sama dengan ronde aktif
+    const currentTracks = allTracks.filter(track => track.roundId == currentRoundId);
+    
+    const latestScores = {};
+    currentTracks.forEach(track => {
+        latestScores[track.hole] = { strokes: track.strokes, par: track.par };
+    });
+
+    let totalStrokes = 0;
+    let totalPar = 0;
+    const holesPlayed = Object.keys(latestScores).length;
+
+    for (const hole in latestScores) {
+        totalStrokes += latestScores[hole].strokes;
+        totalPar += latestScores[hole].par;
+    }
+
+    // Update elemen HTML
+    document.getElementById('total-strokes-val').textContent = totalStrokes;
+    document.getElementById('total-par-val').textContent = totalPar;
+    document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
+
+    const statusEl = document.getElementById('over-under-status');
+    
+    if (holesPlayed === 0) {
+        // Jika belum ada permainan, kembalikan ke tampilan awal
+        statusEl.textContent = "No Data";
+        statusEl.style.color = "#aaa"; // Warna abu-abu
+    } else {
+        const diff = totalStrokes - totalPar;
+        
+        if (diff === 0) {
+            statusEl.textContent = "EVEN";
+            statusEl.style.color = "white";
+        } else if (diff > 0) {
+            statusEl.textContent = `+${diff} (Over Par)`;
+            statusEl.style.color = "#ff4444";
+        } else {
+            statusEl.textContent = `${diff} (Under Par)`;
+            statusEl.style.color = "#00ff88";
+        }
+    }
+}
+
+//Fungsi Update Score
+function updateSummaryScore() {
+    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+
+    let totalStrokes = 0;
+    let totalPar = 0;
+    let holesPlayed = allTracks.length;
+
+    allTracks.forEach(track => {
+        totalStrokes += track.strokes;
+        totalPar += track.par;
+    });
+
+    // Update UI
+    document.getElementById('total-strokes-val').textContent = totalStrokes;
+    document.getElementById('total-par-val').textContent = totalPar;
+    document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
+
+    // Hitung Over / Under
+    const diff = totalStrokes - totalPar;
+    const statusEl = document.getElementById('over-under-status');
+
+    if (diff === 0) {
+        statusEl.textContent = 'Even';
+        statusEl.className = 'status-badge even';
+    } else if (diff > 0) {
+        statusEl.textContent = `+${diff}`;
+        statusEl.className = 'status-badge over';
+    } else {
+        statusEl.textContent = diff; // sudah minus
+        statusEl.className = 'status-badge under';
+    }
+}
+
+
 
 //-------------------------------------------------------
 function clearAll() {
@@ -819,3 +932,4 @@ function getGolfTerm(strokes, par) {
     };
     return terms[diff] || (diff > 0 ? `+${diff} Strokes` : `${diff} Strokes`);
 }
+
