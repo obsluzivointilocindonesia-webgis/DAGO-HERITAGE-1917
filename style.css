@@ -77,7 +77,6 @@ body, html, #cesiumContainer {
 
     .summary-card {
         width: 20%;
-        max-width: none;
         padding: 1px;
     }
 
@@ -87,11 +86,11 @@ body, html, #cesiumContainer {
     }
 
     .label {
-        font-size: 0.65rem;
+        font-size: 0.5rem;
     }
 
     .value {
-        font-size: 1.1rem;
+        font-size: 0.8rem;
     }
 
     .status-badge {
