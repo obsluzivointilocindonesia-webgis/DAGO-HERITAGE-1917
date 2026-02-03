@@ -754,7 +754,13 @@ function updateSummaryUI() {
         statusEl.style.color = diff > 0 ? "#ff4444" : (diff < 0 ? "#00ff88" : "white");
     }
 }
-
+//---------minimize score container
+document.getElementById('score-summary-container').addEventListener('click', function(e) {
+    // Jangan trigger jika yang diklik adalah tombol "New Game"
+    if (e.target.id === 'newGameBtn') return;
+    
+    this.classList.toggle('minimized');
+});
 
 
 //-------------------------------------------------------

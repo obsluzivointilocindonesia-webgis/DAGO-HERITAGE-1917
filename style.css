@@ -193,3 +193,13 @@ body, html, #cesiumContainer {
     font-size: 0.9rem;
 }
 
+.summary-card.minimized .summary-grid, 
+.summary-card.minimized #newGameBtn,
+.summary-card.minimized hr {
+    display: none; /* Sembunyikan isi saat dikecilkan */
+}
+
+.summary-card.minimized {
+    width: auto;
+    cursor: pointer;
+}
