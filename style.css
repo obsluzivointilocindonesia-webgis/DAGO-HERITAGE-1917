@@ -76,25 +76,38 @@ body, html, #cesiumContainer {
     }
 
     .summary-card {
-        width: 20%;
-        padding: 1px;
+        width: 140px; /* Diperkecil drastis */
+        padding: 8px;
+        left: 5px;
+        top: 5px;
+    }
+
+    .summary-card h3 {
+        font-size: 0.75rem; /* Judul lebih kecil */
+        margin-bottom: 5px;
     }
 
     .summary-grid {
-        grid-template-columns: 1fr;
+        gap: 5px; /* Jarak antar item dipersempit */
     }
 
     .label {
-        font-size: 0.5rem;
+        font-size: 0.55rem; /* Label (Total Strokes dll) sangat kecil */
     }
 
     .value {
-        font-size: 0.8rem;
+        font-size: 1rem; /* Angka tetap terbaca tapi tidak raksasa */
     }
 
     .status-badge {
-        font-size: 0.8rem;
-        padding: 6px;
+        font-size: 0.7rem;
+        padding: 3px;
+        margin-top: 8px;
+    }
+
+    #newGameBtn {
+        font-size: 0.65rem; /* Tombol diperkecil */
+        padding: 5px;
     }
 
     #toolbar-info {

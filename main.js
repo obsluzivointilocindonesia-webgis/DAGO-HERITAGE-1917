@@ -204,11 +204,20 @@ const viewerControls = viewer.scene.screenSpaceCameraController;
 
 // FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
-    
+    const scoreNow = document.getElementById('score-panel');
+    if (scoreNow) {
+        scoreNow.style.display = 'none'; 
+    }
     const infoBox = document.getElementById('toolbar-info');
     if (infoBox) {
         infoBox.style.display = 'none'; 
     }
+
+    const infoScore = document.getElementById('score-summary-container');
+    if (infoScore) {
+        infoScore.style.display = 'none'; 
+    }
+
     // Jika sedang nge-drag, jangan buat titik baru
     if (isDragging) return;
 
@@ -619,6 +628,19 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
     if (!holeId) return alert("Pilih Hole terlebih dahulu!");
     if (activePoints.length < 2) return alert("Minimal harus ada 2 titik (1 pukulan) untuk menyimpan track.");
 
+    const scoreNow = document.getElementById('score-panel');
+    if (scoreNow) {
+        scoreNow.style.display = 'block'; 
+    }
+
+    const infoScore = document.getElementById('score-summary-container');
+    if (infoScore) {
+        infoScore.style.display = 'block'; 
+    }
+
+    if (profileChart) profileChart.destroy();
+    document.getElementById('chartContainer').style.display = 'none';
+
     // 1. Ambil data PAR dari GeoJSON yang sudah ter-load
     let holePar = 0;
     const dataSources = viewer.dataSources;
@@ -671,9 +693,9 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
 
     // Update UI Skor
     document.getElementById('current-score-text').textContent = `${finalStrokes} Strokes (${scoreTerm})`;
-    updateSummaryScore();
-    alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
-    
+    updateSummaryUI();
+   // alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
+    alert(`Tersimpan di Ronde Aktif!`)
 });
 //new ronde
 // A. Fungsi untuk memulai ronde baru
@@ -696,11 +718,14 @@ function updateSummaryUI() {
     const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
     const currentRoundId = localStorage.getItem('current_round_id');
     
-    // FILTER: Hanya ambil track yang memiliki roundId yang sama dengan ronde aktif
-    const currentTracks = allTracks.filter(track => track.roundId == currentRoundId);
-    
+    // FILTER KETAT: Hanya ambil data yang roundId-nya sama dengan ronde aktif
+    const currentTracks = allTracks.filter(track => {
+        return track.roundId == currentRoundId; 
+    });
+
     const latestScores = {};
     currentTracks.forEach(track => {
+        // Jika ada input ganda di hole yang sama pada ronde yang sama, ambil yang terakhir
         latestScores[track.hole] = { strokes: track.strokes, par: track.par };
     });
 
@@ -718,59 +743,15 @@ function updateSummaryUI() {
     document.getElementById('total-par-val').textContent = totalPar;
     document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
 
+    // Reset status Over/Under
     const statusEl = document.getElementById('over-under-status');
-    
     if (holesPlayed === 0) {
-        // Jika belum ada permainan, kembalikan ke tampilan awal
         statusEl.textContent = "No Data";
-        statusEl.style.color = "#aaa"; // Warna abu-abu
+        statusEl.style.color = "#aaa";
     } else {
         const diff = totalStrokes - totalPar;
-        
-        if (diff === 0) {
-            statusEl.textContent = "EVEN";
-            statusEl.style.color = "white";
-        } else if (diff > 0) {
-            statusEl.textContent = `+${diff} (Over Par)`;
-            statusEl.style.color = "#ff4444";
-        } else {
-            statusEl.textContent = `${diff} (Under Par)`;
-            statusEl.style.color = "#00ff88";
-        }
-    }
-}
-
-//Fungsi Update Score
-function updateSummaryScore() {
-    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
-
-    let totalStrokes = 0;
-    let totalPar = 0;
-    let holesPlayed = allTracks.length;
-
-    allTracks.forEach(track => {
-        totalStrokes += track.strokes;
-        totalPar += track.par;
-    });
-
-    // Update UI
-    document.getElementById('total-strokes-val').textContent = totalStrokes;
-    document.getElementById('total-par-val').textContent = totalPar;
-    document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
-
-    // Hitung Over / Under
-    const diff = totalStrokes - totalPar;
-    const statusEl = document.getElementById('over-under-status');
-
-    if (diff === 0) {
-        statusEl.textContent = 'Even';
-        statusEl.className = 'status-badge even';
-    } else if (diff > 0) {
-        statusEl.textContent = `+${diff}`;
-        statusEl.className = 'status-badge over';
-    } else {
-        statusEl.textContent = diff; // sudah minus
-        statusEl.className = 'status-badge under';
+        statusEl.textContent = diff === 0 ? "EVEN" : (diff > 0 ? `+${diff}` : `${diff}`);
+        statusEl.style.color = diff > 0 ? "#ff4444" : (diff < 0 ? "#00ff88" : "white");
     }
 }
 
