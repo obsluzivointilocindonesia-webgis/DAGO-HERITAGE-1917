@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TERRA GOLF</title>
@@ -12,31 +10,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="auth-overlay" class="auth-box">
-    <div class="auth-container">
-        <h2 id="auth-title">Selamat Datang di TerraGOLF<br> DAGO HERITAGE 1917</h2>
-        <p id="auth-subtitle">Silakan masuk untuk mulai mencatat skor.</p>
-        
-        <input type="email" id="auth-email" placeholder="Email Anda" class="auth-input">
-        <input type="password" id="auth-pass" placeholder="Password" class="auth-input">
-        
-        <div id="register-fields" style="display: none;">
-            <input type="text" id="auth-name" placeholder="Nama Lengkap" class="auth-input">
-        </div>
-
-        <button id="auth-primary-btn" class="auth-btn">Masuk</button>
-        <p class="auth-switch">Belum punya akun? <span id="toggle-auth">Daftar sekarang</span></p>
-    </div>
-</div>
-
     <div id="cesiumContainer"></div>
     <div id="chartContainer">
         <div class="chart-wrapper">
         <canvas id="profileChart"></canvas>
     </div>
 </div>
-
     <div class="ui-overlay">
         <div id="hole-selector-container">
             <select id="holeSelect" class="menu-button-ops">
@@ -61,84 +40,22 @@
             <option value="18">Hole 18</option>
             </select>
         </div>
-        <div id="toolbar-info">
-            <strong>Instruksi:</strong><br>
-            Klik titik Tee Shot di peta <br>
-        </div> 
         <button id="clearBtn" class="btn btn-navy">Hapus Semua Pengukuran</button>
         <button id="contourBtn" class="btn btn-dark">Tampilkan Kontur: OFF</button>
         <button id="undoBtn" class="menu-button" style="background-color: #9e4949;">Hapus Titik Terakhir</button>
         <button id="saveTrackBtn" class="menu-button" style="background-color: #27ae60;">Simpan Track</button>
         <button id="historyBtn" class="menu-button" style="background-color: #2980b9;">Riwayat Track</button>
         <button id="deleteHistoryBtn" class="menu-button" style="background-color: #4a4f52;">Hapus Riwayat Track</button>
-        <div id="score-panel" style="background: rgba(0,0,0,0.7); padding: 10px; font-size: 18px; border-radius: 5px; color: white; margin-top: 1px;margin-bottom: 1px;">
+        <div id="score-panel" style="background: rgba(0,0,0,0.7); padding: 10px; font-size: 18px; border-radius: 5px; color: white; margin-top: 5px;">
         <strong>Skor Hole Ini: </strong> <span id="current-score-text">-</span>
-        <div id="score-summary-container" class="summary-card">
-        <h3>Rangkuman Scorecard</h3>
-        <div id="user-info-panel" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 8px;">
-            <div>
-                <small style="color: #aaa; font-size: 0.5rem; display: block;">GOLFER</small>
-                <strong id="display-user-name" style="color: #00ff88; font-size: 0.9rem;">Nama User</strong>
-                <span id="user-status-badge" style="font-size: 0.5rem; padding: 2px 5px; border-radius: 10px; margin-left: 5px;"></span>
-            </div>
-                <button id="logoutBtn" style="background: none; border: 1px solid #ff4444; color: #ff4444; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; cursor: pointer;">
-                    Logout
-                </button>
-        </div>
-            <button id="newGameBtn" class="menu-button" style="background-color: #192cbb;">Mulai Ronde Baru</button>
-        <hr>
-        <div class="summary-grid">
-            <div class="summary-item">
-                <span class="label">Total Strokes</span>
-                <span id="total-strokes-val" class="value">0</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Total PAR</span>
-                <span id="total-par-val" class="value">0</span>
-            </div>
-            <div class="summary-item">
-                <span class="label">Holes Played</span>
-                <span id="holes-played-val" class="value">0/18</span>
-            </div>
-        </div>
-    <div id="over-under-status" class="status-badge">Even</div>
-        
-<div id="report-section" style="margin-top: 20px;">
-    <button id="viewDetailBtn" class="btn-golf">Lihat Detail Scorecard</button>
-    <button id="exportPdfBtn" class="btn-golf" style="background: #27ae60;">Simpan ke PDF</button>
-</button>
-    <div id="table-scroll-container" class="scorecard-scroll-box">
-        <div id="pdf-content" style="background: white; color: black; padding: 15px; display: none;">
-            <h2 style="text-align: center; font-size: 1.2rem; margin-bottom: 5px;">OFFICIAL SCORECARD</h2>
-            <p id="pdf-date" style="text-align: center; font-size: 0.8rem; margin-bottom: 10px;"></p>
-            
-            <table style="width: 100%; border-collapse: collapse; min-width: 400px;"> <thead>
-                    <tr style="background: #f2f2f2; font-size: 0.8rem;">
-                        <th style="border: 1px solid #ddd; padding: 6px;">Hole</th>
-                        <th style="border: 1px solid #ddd; padding: 6px;">Par</th>
-                        <th style="border: 1px solid #ddd; padding: 6px;">Strokes</th>
-                        <th style="border: 1px solid #ddd; padding: 6px;">Score</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body-detail" style="font-size: 0.8rem; text-align: center;">
-                    </tbody>
-                <footer id="table-footer-detail">
-                     <tr style="font-weight: bold; background: #eee; font-size: 0.8rem;">
-                        <td style="border: 1px solid #ddd; padding: 6px;">TOTAL</td>
-                        <td id="total-par-pdf" style="border: 1px solid #ddd; padding: 6px;">0</td>
-                        <td id="total-strokes-pdf" style="border: 1px solid #ddd; padding: 6px;">0</td>
-                        <td id="total-diff-pdf" style="border: 1px solid #ddd; padding: 6px;">-</td>
-                    </tr>
-                </footer>
-            </table>
-        </div>
-    </div>
 </div>
+        <div id="toolbar-info">
+            <strong>Instruksi:</strong><br>
+            Klik dua titik di peta <br>
+            Jarak, Beda Tinggi, Arah, <br> 
+            & Profil Elevasi muncul.
+        </div>
     </div>
-    </div>    
-    </div>
-    <button id="focusGpsBtn" style="position:fixed; bottom:20px; right:20px; width:50px; height:50px; border-radius:50%; background: white; border: 2px solid #00ff88; cursor: pointer; z-index: 1000;">
-    📍
     <script src="main.js"></script>
 </body>
 </html>

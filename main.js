@@ -1,17 +1,10 @@
 // 1. KONFIGURASI AWAL
-//tambahan untuk supabase
-let currentUser = null;
-let userLat = 0, userLon = 0;
-const supabaseUrl = 'https://jltjrfhbreswadzlexzg.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdGpyZmhicmVzd2FkemxleHpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMjA4NjIsImV4cCI6MjA4NTY5Njg2Mn0.mS7QjBoWBS-xYZcAE--SaZHioJ_RqA57l_Bs5p6ppag';
-const sb = supabase.createClient(supabaseUrl, supabaseKey);
-
 Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzY2ZhMGQ3MS1mYzYwLTQ1NzktODY1Mi1lODRhZjRmMWE4Y2EiLCJpZCI6Mzg0MjAyLCJpYXQiOjE3Njk1Njg5ODJ9.5U2zZd_um-3-iYrpnfZg1Xt7eI7N_CPTCQHoa2xB0jQ";
 
 const viewer = new Cesium.Viewer('cesiumContainer', {
     terrain: Cesium.Terrain.fromWorldTerrain(),
 });
-viewer.scene.globe.depthTestAgainstTerrain = false;
+viewer.scene.globe.depthTestAgainstTerrain = true;
 
 let activePoints = []; 
 let labelsList = []; // Untuk menyimpan label agar mudah dihapus
@@ -24,14 +17,6 @@ let currentContourTileset = null; // Menyimpan tileset kontur yang sedang aktif
 let isContourOn = false;         // Status tombol ON/OFF
 let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
 let currentContourLayer = null;
-let userLocationMarker = null;
-let currentRoundId = localStorage.getItem('current_round_id');
-
-// Jika belum ada (baru pertama kali buka aplikasi), buat satu ID awal
-if (!currentRoundId) {
-    currentRoundId = Date.now(); // Menggunakan timestamp sebagai ID unik
-    localStorage.setItem('current_round_id', currentRoundId);
-}
 
 // 2. LOAD ASSET TILESET
 async function init() {
@@ -170,7 +155,7 @@ function updateVisuals() {
             position: midPos,
             label: {
                 text: `${dist.toFixed(1)} m`,
-                font: 'bold 12pt "Arial Black", Gadget, sans-serif',
+                font: 'bold 16pt "Arial Black", Gadget, sans-serif',
                 fillColor: Cesium.Color.AQUA,
                 outlineWidth: 4,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
@@ -185,7 +170,7 @@ function updateVisuals() {
             position: pStart,
             label: {
                 text: `ARAH: ${bearing.toFixed(1)}°\nKEMIRINGAN: ${slope.toFixed(1)}%\nΔTINGGI: ${deltaH.toFixed(1)}m`,
-                font: 'bold 12pt "Arial Black", Gadget, sans-serif',
+                font: 'bold 14pt "Arial Black", Gadget, sans-serif',
                 fillColor: Cesium.Color.WHITE,
                 outlineColor: Cesium.Color.BLACK,
                 outlineWidth: 4,
@@ -211,20 +196,11 @@ const viewerControls = viewer.scene.screenSpaceCameraController;
 
 // FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
-    const scoreNow = document.getElementById('score-panel');
-    if (scoreNow) {
-        scoreNow.style.display = 'none'; 
-    }
+    
     const infoBox = document.getElementById('toolbar-info');
     if (infoBox) {
         infoBox.style.display = 'none'; 
     }
-
-    const infoScore = document.getElementById('score-summary-container');
-    if (infoScore) {
-        infoScore.style.display = 'none'; 
-    }
-
     // Jika sedang nge-drag, jangan buat titik baru
     if (isDragging) return;
 
@@ -626,27 +602,11 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 //----------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-    updateSummaryUI();
-});
-//-----------------------------------------------
-document.getElementById('saveTrackBtn').addEventListener('click', async() => {
+
+document.getElementById('saveTrackBtn').addEventListener('click', () => {
     const holeId = document.getElementById('holeSelect').value;
     if (!holeId) return alert("Pilih Hole terlebih dahulu!");
     if (activePoints.length < 2) return alert("Minimal harus ada 2 titik (1 pukulan) untuk menyimpan track.");
-
-    const scoreNow = document.getElementById('score-panel');
-    if (scoreNow) {
-        scoreNow.style.display = 'block'; 
-    }
-
-    const infoScore = document.getElementById('score-summary-container');
-    if (infoScore) {
-        infoScore.style.display = 'block'; 
-    }
-
-    if (profileChart) profileChart.destroy();
-    document.getElementById('chartContainer').style.display = 'none';
 
     // 1. Ambil data PAR dari GeoJSON yang sudah ter-load
     let holePar = 0;
@@ -685,7 +645,6 @@ document.getElementById('saveTrackBtn').addEventListener('click', async() => {
     // 5. Simpan ke LocalStorage
     const newEntry = {
         id: Date.now(),
-        roundId: localStorage.getItem('current_round_id'),
         date: new Date().toLocaleString('id-ID'),
         hole: holeId,
         par: holePar,
@@ -698,104 +657,11 @@ document.getElementById('saveTrackBtn').addEventListener('click', async() => {
     allTracks.push(newEntry);
     localStorage.setItem('golf_tracks', JSON.stringify(allTracks));
 
-    //Simpan ke SUPABASE
-    // --- START: MODIFIKASI SUPABASE SYNC ---
-    // Pastikan user sudah login sebelum kirim ke cloud
-    if (currentUser) {
-        try {
-            const { error } = await sb
-                .from('tracks')
-                .insert([{
-                    user_id: currentUser.id,
-                    round_id: String(newEntry.roundId), // Supabase suka string untuk ID
-                    hole_number: parseInt(newEntry.hole),
-                    par: newEntry.par,
-                    strokes: newEntry.strokes,
-                    score_term: newEntry.scoreTerm,
-                    points: newEntry.points // Kolom JSONB di Supabase
-                }]);
-
-            if (error) throw error;
-            console.log("Berhasil sinkronisasi ke Supabase!");
-        } catch (err) {
-            console.error("Gagal sinkronisasi ke Cloud:", err.message);
-            // Tetap lanjut karena sudah tersimpan di LocalStorage
-        }
-    }
-    // --- END: MODIFIKASI SUPABASE SYNC ---
-
-
     // Update UI Skor
     document.getElementById('current-score-text').textContent = `${finalStrokes} Strokes (${scoreTerm})`;
-    updateSummaryUI();
-   // alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
-    alert(`Tersimpan di Cloud dan Lokal!`)
-});
-//new ronde
-// A. Fungsi untuk memulai ronde baru
-document.getElementById('newGameBtn').addEventListener('click', () => {
-    if (confirm("Mulai ronde baru? Skor pada scorecard akan direset, tapi log permainan tetap tersimpan.")) {
-        // Buat ID unik baru untuk ronde ini
-        const newRoundId = Date.now();
-        localStorage.setItem('current_round_id', newRoundId);
-        
-        // Refresh tampilan (akan jadi NOL karena ID ronde berubah)
-        updateSummaryUI();
-        
-        // Reset UI teks hole saat ini
-        document.getElementById('current-score-text').textContent = "-";
-        alert("Ronde baru dimulai!");
-    }
-});    
-
-function updateSummaryUI() {
-    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
-    const currentRoundId = localStorage.getItem('current_round_id');
     
-    // FILTER KETAT: Hanya ambil data yang roundId-nya sama dengan ronde aktif
-    const currentTracks = allTracks.filter(track => {
-        return track.roundId == currentRoundId; 
-    });
-
-    const latestScores = {};
-    currentTracks.forEach(track => {
-        // Jika ada input ganda di hole yang sama pada ronde yang sama, ambil yang terakhir
-        latestScores[track.hole] = { strokes: track.strokes, par: track.par };
-    });
-
-    let totalStrokes = 0;
-    let totalPar = 0;
-    const holesPlayed = Object.keys(latestScores).length;
-
-    for (const hole in latestScores) {
-        totalStrokes += latestScores[hole].strokes;
-        totalPar += latestScores[hole].par;
-    }
-
-    // Update elemen HTML
-    document.getElementById('total-strokes-val').textContent = totalStrokes;
-    document.getElementById('total-par-val').textContent = totalPar;
-    document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
-
-    // Reset status Over/Under
-    const statusEl = document.getElementById('over-under-status');
-    if (holesPlayed === 0) {
-        statusEl.textContent = "No Data";
-        statusEl.style.color = "#aaa";
-    } else {
-        const diff = totalStrokes - totalPar;
-        statusEl.textContent = diff === 0 ? "EVEN" : (diff > 0 ? `+${diff}` : `${diff}`);
-        statusEl.style.color = diff > 0 ? "#ff4444" : (diff < 0 ? "#00ff88" : "white");
-    }
-}
-//---------minimize score container
-document.getElementById('score-summary-container').addEventListener('click', function(e) {
-    // Jangan trigger jika yang diklik adalah tombol "New Game"
-    if (e.target.id === 'newGameBtn') return;
-    
-    this.classList.toggle('minimized');
+    alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
 });
-
 
 //-------------------------------------------------------
 function clearAll() {
@@ -855,7 +721,8 @@ document.getElementById('historyBtn').addEventListener('click', () => {
         }
         //-----------------------
         document.getElementById('current-score-text').textContent = 
-        `${selectedTrack.strokes} Strokes (${selectedTrack.scoreTerm || 'N/A'}) - PAR ${selectedTrack.par}`;
+    `${selectedTrack.strokes} Strokes (${selectedTrack.scoreTerm || 'N/A'}) - PAR ${selectedTrack.par}`;
+
         updateVisuals();
         alert(`Memuat Track Hole ${selectedTrack.hole}`);
     }
@@ -951,390 +818,4 @@ function getGolfTerm(strokes, par) {
         "3": "Triple Bogey"
     };
     return terms[diff] || (diff > 0 ? `+${diff} Strokes` : `${diff} Strokes`);
-}
-
-// 1. Fungsi untuk mengisi data ke dalam tabel detail
-function generateTableDetail() {
-    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
-    const currentRoundId = localStorage.getItem('current_round_id');
-    const currentTracks = allTracks.filter(t => t.roundId == currentRoundId);
-
-    const tbody = document.getElementById('table-body-detail');
-    tbody.innerHTML = ""; // Bersihkan tabel
-
-    let tStrokes = 0;
-    let tPar = 0;
-
-    // Urutkan berdasarkan nomor Hole
-    currentTracks.sort((a, b) => parseInt(a.hole) - parseInt(b.hole));
-
-    currentTracks.forEach(track => {
-        const row = `
-            <tr>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${track.hole}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${track.par}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${track.strokes}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${track.scoreTerm}</td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-        tStrokes += track.strokes;
-        tPar += track.par;
-    });
-
-    // Update Footer Tabel
-    document.getElementById('total-par-pdf').textContent = tPar;
-    document.getElementById('total-strokes-pdf').textContent = tStrokes;
-    document.getElementById('total-diff-pdf').textContent = (tStrokes - tPar > 0 ? "+" : "") + (tStrokes - tPar);
-    document.getElementById('pdf-date').textContent = "Tanggal: " + new Date().toLocaleDateString('id-ID');
-}
-
-// 2. Event Listener Tombol Lihat Detail
-document.getElementById('viewDetailBtn').addEventListener('click', () => {
-    const content = document.getElementById('pdf-content');
-    if (content.style.display === "none") {
-        generateTableDetail();
-        content.style.display = "block";
-        document.getElementById('viewDetailBtn').textContent = "Tutup Detail";
-    } else {
-        content.style.display = "none";
-        document.getElementById('viewDetailBtn').textContent = "Lihat Detail Scorecard";
-    }
-});
-
-// 3. Event Listener Tombol Export PDF
-document.getElementById('exportPdfBtn').addEventListener('click', () => {
-    const element = document.getElementById('pdf-content');
-    
-    // Simpan tampilan asli
-    const originalDisplay = element.style.display;
-    element.style.display = "block"; 
-
-    const opt = {
-        margin:       0.5,
-        filename:     `Golf-Scorecard-${Date.now()}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Jangan kembalikan ke display none jika user sedang melihat detail
-        if (originalDisplay === "none") {
-            element.style.display = "none";
-        }
-    });
-});
-
-let isRegisterMode = false;
-
-// 1. Fungsi Toggle Login/Daftar
-document.getElementById('toggle-auth').addEventListener('click', () => {
-    isRegisterMode = !isRegisterMode;
-    document.getElementById('auth-title').textContent = isRegisterMode ? "Daftar Akun Baru" : "Selamat Datang";
-    document.getElementById('register-fields').style.display = isRegisterMode ? "block" : "none";
-    document.getElementById('auth-primary-btn').textContent = isRegisterMode ? "Daftar" : "Masuk";
-    document.getElementById('toggle-auth').textContent = isRegisterMode ? "Sudah punya akun? Login" : "Daftar sekarang";
-});
-
-// 2. Logika Utama Tombol Auth
-document.getElementById('auth-primary-btn').addEventListener('click', async () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    const fullName = document.getElementById('auth-name').value;
-
-    try {
-        if (isRegisterMode) {
-            const { data, error } = await sb.auth.signUp({
-                email, password: pass,
-                options: { data: { full_name: fullName } }
-            });
-            if (error) throw error;
-            alert("Pendaftaran berhasil! Cek email (atau langsung login jika konfirmasi email dimatikan).");
-        } else {
-            const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-            if (error) throw error;
-
-            console.log("Login sukses!");
-            // Sembunyikan overlay secara manual dulu sebelum reload
-            document.getElementById('auth-overlay').style.display = 'none';
-            
-            // Reload hanya jika perlu untuk refresh state
-            window.location.reload();
-        }
-    } catch (err) {
-        alert("Pesan: " + err.message);
-        console.error(err);
-    }
-});
-
-// 3. Fungsi Cek Akses (Trial 7 Hari / Berbayar)
-// Jalankan pengecekan setiap halaman di-load
-function checkTrialAccess() {
-    const activeUser = JSON.parse(localStorage.getItem('active_user'));
-    const overlay = document.getElementById('auth-overlay');
-
-    if (!activeUser) {
-        overlay.style.display = 'flex';
-        return;
-    }
-
-    // --- LOGIKA MENAMPILKAN NAMA ---
-    const nameEl = document.getElementById('display-user-name');
-    if (nameEl) nameEl.textContent = activeUser.name;
-
-    // Logika cek tanggal trial
-    const joinDate = new Date(activeUser.joinDate);
-    const today = new Date();
-    const diffTime = Math.abs(today - joinDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (!activeUser.isPaid && diffDays > 7) {
-        // ... (logika lockdown aplikasi jika > 7 hari) ...
-        overlay.style.display = 'flex';
-    } else {
-        overlay.style.display = 'none';
-    }
-} checkTrialAccess();
-
-// 3. Fungsi Tombol Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    if (confirm("Apakah Anda yakin ingin logout?")) {
-        localStorage.removeItem('active_user'); // Hapus sesi
-        location.reload(); // Refresh halaman akan otomatis memicu form login
-    }
-});
-
-//fungsi GPS
-function startGpsTracking() {
-    if ("geolocation" in navigator) {
-        // Menggunakan watchPosition agar lokasi terupdate otomatis saat pemain berjalan
-        navigator.geolocation.watchPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const accuracy = position.coords.accuracy; // Akurasi dalam meter
-
-                console.log(`Lokasi GPS: ${lat}, ${lon} (Akurasi: ${accuracy}m)`);
-                updateUserMarker(lat, lon);
-            },
-            (error) => {
-                console.error("Gagal mendapatkan GPS:", error.message);
-                alert("Mohon aktifkan GPS di perangkat Anda.");
-            },
-            {
-                enableHighAccuracy: true, // Wajib TRUE untuk akurasi lapangan golf
-                maximumAge: 1000,
-                timeout: 5000
-            }
-        );
-    } else {
-        alert("Perangkat Anda tidak mendukung GPS.");
-    }
-}
-
-function updateUserMarker(lat, lon) {
-    const position = Cesium.Cartesian3.fromDegrees(lon, lat,0);
-
-    if (!userLocationMarker) {
-        // Jika belum ada, buat marker baru (Warna Biru)
-        userLocationMarker = viewer.entities.add({
-            position: position,
-            point: {
-                pixelSize: 15,
-                color: Cesium.Color.BLUE,
-                outlineColor: Cesium.Color.WHITE,
-                outlineWidth: 3,
-                disableDepthTestDistance: Number.POSITIVE_INFINITY, 
-                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
-            },
-            label: {
-                text: "Posisi Saya",
-                font: "12px sans-serif",
-                verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                pixelOffset: new Cesium.Cartesian2(0, -20),
-                disableDepthTestDistance: Number.POSITIVE_INFINITY
-            }
-        });
-    } else {
-        // Jika sudah ada, tinggal update posisinya
-        userLocationMarker.position = position;
-    }
-}
-
-document.getElementById('focusGpsBtn').addEventListener('click', () => {
-    if (userLocationMarker) {
-        viewer.zoomTo(userLocationMarker);
-    } else {
-        alert("Mencari sinyal GPS...");
-        startGpsTracking();
-    }
-});
-
-//------------
-async function saveScoreToCloud(hole, par, strokes, term) {
-    if (!currentUser) return;
-
-    const { error } = await sb
-        .from('tracks')
-        .insert([{
-            user_id: currentUser.id,
-            round_id: localStorage.getItem('current_round_id'),
-            hole_number: parseInt(hole),
-            par: par,
-            strokes: strokes,
-            score_term: term,
-            // Masukkan koordinat GPS jika ada
-            points: { lat: userLat, lon: userLon } 
-        }]);
-
-    if (error) console.error("Gagal Sync:", error.message);
-    else console.log("Data tersimpan di Cloud!");
-}
-
-// supabase access
-async function checkAccess() {
-    console.log("Memulai pengecekan akses...");
-    const { data: { session } } = await sb.auth.getSession();
-    const overlay = document.getElementById('auth-overlay');
-
-    if (!session) {
-        console.log("Tidak ada sesi, tetap di layar login.");
-        overlay.style.display = 'flex';
-        return;
-    }
-
-    console.log("Sesi ditemukan untuk:", session.user.email);
-
-    // Ambil data profil
-    let { data: profile, error } = await sb
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-    if (error) {
-        console.error("Error mengambil profil:", error.message);
-        return;
-    }
-
-    // Jika profil belum ada di tabel, buat sekarang
-    // Di dalam fungsi checkAccess, bagian profil kosong:
-    if (!profile) {
-        console.log("Profil kosong, mencoba membuat baru...");
-        const metaName = session.user.user_metadata?.full_name || "Golfer";
-        
-        // Pastikan kolom yang diisi sesuai dengan yang ada di tabel 'profiles'
-        const { data: newProf, error: insErr } = await sb
-            .from('profiles')
-            .insert([{ 
-                id: session.user.id, 
-                full_name: metaName, 
-                is_paid: false 
-                // Jangan masukkan join_date/created_at di sini karena biasanya otomatis dari database
-            }])
-            .select()
-            .maybeSingle();
-
-        if (insErr) {
-            console.error("Gagal buat profil:", insErr.message);
-            // Jika gagal karena RLS, kita beri peringatan di console
-            return;
-        }
-        profile = newProf;
-    }
-
-    // PASANG DATA KE GLOBAL VARIABLE
-    currentUser = profile;
-    console.log("Profil aktif:", currentUser);
-
-    // ISI NAMA KE UI
-    const nameEl = document.getElementById('display-user-name');
-    if (nameEl) nameEl.textContent = currentUser.full_name;
-
-    // LOGIKA SEMBUNYIKAN LOGIN (PENTING!)
-    const joinDate = new Date(currentUser.created_at || currentUser.join_date || new Date());
-    const today = new Date();
-    const diffDays = Math.ceil((today - joinDate) / (1000 * 60 * 60 * 24));
-
-    if (!currentUser.is_paid && diffDays > 7) {
-        console.log("Masa trial habis.");
-        overlay.style.display = 'flex';
-        // (Tambahkan logika ubah teks tombol ke WhatsApp di sini jika mau)
-    } else {
-        console.log("Akses diberikan, menyembunyikan overlay...");
-        overlay.style.display = 'none'; // KUNCI UTAMA
-        loadTracksFromCloud();
-    }
-    // badge user
-    const now = new Date();
-    const validUntil = new Date(currentUser.valid_until);
-
-    // Hitung sisa hari untuk ditampilkan di UI (Opsional)
-    const timeDiff = validUntil - now;
-    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-    const badge = document.getElementById('user-status-badge');
-
-    if (now > validUntil) {
-        // --- JIKA SUDAH EXPIRED ---
-        overlay.style.display = 'flex';
-        document.getElementById('auth-title').textContent = "Akses Terkunci";
-        document.getElementById('auth-subtitle').innerHTML = 
-            `Masa berlaku akun Anda telah habis.<br>Silakan lakukan pembayaran bulanan untuk melanjutkan.`;
-        
-        // Sembunyikan input, tampilkan tombol WA
-        document.getElementById('auth-email').style.display = 'none';
-        document.getElementById('auth-pass').style.display = 'none';
-        
-        const btn = document.getElementById('auth-primary-btn');
-        btn.textContent = "Aktifkan 30 Hari (WhatsApp)";
-        btn.onclick = () => window.open(`https://wa.me/628119910599?text=Halo Admin, saya ingin perpanjang langganan 1 Bulan. Email: ${currentUser.email}`);
-        
-    } else {
-        // --- JIKA MASIH AKTIF ---
-        overlay.style.display = 'none';
-        
-        // Update Status Badge
-        if (daysLeft <= 3) {
-            badge.textContent = `Sisa ${daysLeft} Hari`;
-            badge.style.backgroundColor = "orange";
-        } else {
-            badge.textContent = currentUser.is_paid ? "PRO" : "TRIAL";
-            badge.style.backgroundColor = currentUser.is_paid ? "#00ff88" : "#555";
-        }
-    }
-}
-checkAccess();
-
-// akses any device
-async function loadTracksFromCloud() {
-    if (!currentUser) return;
-
-    const { data, error } = await sb
-        .from('tracks')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .eq('round_id', localStorage.getItem('current_round_id'));
-
-    if (error) {
-        console.error("Gagal ambil data cloud:", error.message);
-    } else if (data) {
-        console.log("Data cloud sinkron:", data.length, "entry ditemukan.");
-        
-        // Simpan data cloud ke LocalStorage agar UI updateSummaryUI() bisa membacanya
-        // Kita petakan agar formatnya sama dengan yang diharapkan fungsi UI kita
-        const formattedData = data.map(d => ({
-            id: d.id,
-            roundId: d.round_id,
-            hole: d.hole_number,
-            par: d.par,
-            strokes: d.strokes,
-            scoreTerm: d.score_term,
-            points: d.points
-        }));
-
-        localStorage.setItem('golf_tracks', JSON.stringify(formattedData));
-        updateSummaryUI(); // Update tabel scorecard kamu
-    }
 }
