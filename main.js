@@ -17,6 +17,14 @@ let currentContourTileset = null; // Menyimpan tileset kontur yang sedang aktif
 let isContourOn = false;         // Status tombol ON/OFF
 let currentContourDataSource = null; // Gunakan DataSource untuk GeoJSON
 let currentContourLayer = null;
+// Cek apakah sudah ada ronde aktif di browser
+let currentRoundId = localStorage.getItem('current_round_id');
+
+// Jika belum ada (baru pertama kali buka aplikasi), buat satu ID awal
+if (!currentRoundId) {
+    currentRoundId = Date.now(); // Menggunakan timestamp sebagai ID unik
+    localStorage.setItem('current_round_id', currentRoundId);
+}
 
 // 2. LOAD ASSET TILESET
 async function init() {
@@ -155,7 +163,7 @@ function updateVisuals() {
             position: midPos,
             label: {
                 text: `${dist.toFixed(1)} m`,
-                font: 'bold 16pt "Arial Black", Gadget, sans-serif',
+                font: 'bold 12pt "Arial Black", Gadget, sans-serif',
                 fillColor: Cesium.Color.AQUA,
                 outlineWidth: 4,
                 style: Cesium.LabelStyle.FILL_AND_OUTLINE,
@@ -170,7 +178,7 @@ function updateVisuals() {
             position: pStart,
             label: {
                 text: `ARAH: ${bearing.toFixed(1)}°\nKEMIRINGAN: ${slope.toFixed(1)}%\nΔTINGGI: ${deltaH.toFixed(1)}m`,
-                font: 'bold 14pt "Arial Black", Gadget, sans-serif',
+                font: 'bold 12pt "Arial Black", Gadget, sans-serif',
                 fillColor: Cesium.Color.WHITE,
                 outlineColor: Cesium.Color.BLACK,
                 outlineWidth: 4,
@@ -196,11 +204,20 @@ const viewerControls = viewer.scene.screenSpaceCameraController;
 
 // FUNGSI UNTUK MENAMBAH TITIK (Klik/Tap Baru)
 handler.setInputAction(async function (movement) {
-    
+    const scoreNow = document.getElementById('score-panel');
+    if (scoreNow) {
+        scoreNow.style.display = 'none'; 
+    }
     const infoBox = document.getElementById('toolbar-info');
     if (infoBox) {
         infoBox.style.display = 'none'; 
     }
+
+    const infoScore = document.getElementById('score-summary-container');
+    if (infoScore) {
+        infoScore.style.display = 'none'; 
+    }
+
     // Jika sedang nge-drag, jangan buat titik baru
     if (isDragging) return;
 
@@ -602,11 +619,27 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 //----------------------------------------------
-
+document.addEventListener('DOMContentLoaded', () => {
+    updateSummaryScore();
+});
+//-----------------------------------------------
 document.getElementById('saveTrackBtn').addEventListener('click', () => {
     const holeId = document.getElementById('holeSelect').value;
     if (!holeId) return alert("Pilih Hole terlebih dahulu!");
     if (activePoints.length < 2) return alert("Minimal harus ada 2 titik (1 pukulan) untuk menyimpan track.");
+
+    const scoreNow = document.getElementById('score-panel');
+    if (scoreNow) {
+        scoreNow.style.display = 'block'; 
+    }
+
+    const infoScore = document.getElementById('score-summary-container');
+    if (infoScore) {
+        infoScore.style.display = 'block'; 
+    }
+
+    if (profileChart) profileChart.destroy();
+    document.getElementById('chartContainer').style.display = 'none';
 
     // 1. Ambil data PAR dari GeoJSON yang sudah ter-load
     let holePar = 0;
@@ -645,6 +678,7 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
     // 5. Simpan ke LocalStorage
     const newEntry = {
         id: Date.now(),
+        roundId: localStorage.getItem('current_round_id'),
         date: new Date().toLocaleString('id-ID'),
         hole: holeId,
         par: holePar,
@@ -659,9 +693,69 @@ document.getElementById('saveTrackBtn').addEventListener('click', () => {
 
     // Update UI Skor
     document.getElementById('current-score-text').textContent = `${finalStrokes} Strokes (${scoreTerm})`;
-    
-    alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
+    updateSummaryUI();
+   // alert(`Track Berhasil Disimpan!\nHole ${holeId} | Skor: ${scoreTerm}`);
+    alert(`Tersimpan di Ronde Aktif!`)
 });
+//new ronde
+// A. Fungsi untuk memulai ronde baru
+document.getElementById('newGameBtn').addEventListener('click', () => {
+    if (confirm("Mulai ronde baru? Skor pada scorecard akan direset, tapi log permainan tetap tersimpan.")) {
+        // Buat ID unik baru untuk ronde ini
+        const newRoundId = Date.now();
+        localStorage.setItem('current_round_id', newRoundId);
+        
+        // Refresh tampilan (akan jadi NOL karena ID ronde berubah)
+        updateSummaryUI();
+        
+        // Reset UI teks hole saat ini
+        document.getElementById('current-score-text').textContent = "-";
+        alert("Ronde baru dimulai!");
+    }
+});    
+
+function updateSummaryUI() {
+    const allTracks = JSON.parse(localStorage.getItem('golf_tracks') || '[]');
+    const currentRoundId = localStorage.getItem('current_round_id');
+    
+    // FILTER KETAT: Hanya ambil data yang roundId-nya sama dengan ronde aktif
+    const currentTracks = allTracks.filter(track => {
+        return track.roundId == currentRoundId; 
+    });
+
+    const latestScores = {};
+    currentTracks.forEach(track => {
+        // Jika ada input ganda di hole yang sama pada ronde yang sama, ambil yang terakhir
+        latestScores[track.hole] = { strokes: track.strokes, par: track.par };
+    });
+
+    let totalStrokes = 0;
+    let totalPar = 0;
+    const holesPlayed = Object.keys(latestScores).length;
+
+    for (const hole in latestScores) {
+        totalStrokes += latestScores[hole].strokes;
+        totalPar += latestScores[hole].par;
+    }
+
+    // Update elemen HTML
+    document.getElementById('total-strokes-val').textContent = totalStrokes;
+    document.getElementById('total-par-val').textContent = totalPar;
+    document.getElementById('holes-played-val').textContent = `${holesPlayed}/18`;
+
+    // Reset status Over/Under
+    const statusEl = document.getElementById('over-under-status');
+    if (holesPlayed === 0) {
+        statusEl.textContent = "No Data";
+        statusEl.style.color = "#aaa";
+    } else {
+        const diff = totalStrokes - totalPar;
+        statusEl.textContent = diff === 0 ? "EVEN" : (diff > 0 ? `+${diff}` : `${diff}`);
+        statusEl.style.color = diff > 0 ? "#ff4444" : (diff < 0 ? "#00ff88" : "white");
+    }
+}
+
+
 
 //-------------------------------------------------------
 function clearAll() {
@@ -819,3 +913,4 @@ function getGolfTerm(strokes, par) {
     };
     return terms[diff] || (diff > 0 ? `+${diff} Strokes` : `${diff} Strokes`);
 }
+

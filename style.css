@@ -12,7 +12,7 @@ body, html, #cesiumContainer {
     border-radius: 5px; font-weight: bold; color: white;
     transition: 0.3s;
     font-size: 16px;
-    margin: 5px;
+    margin: 2px;
     cursor: pointer;
 }
 
@@ -21,7 +21,7 @@ body, html, #cesiumContainer {
     border-radius: 5px; font-weight: bold; color: rgb(0, 0, 0);
     transition: 0.3s;
     font-size: 16px;
-    margin: 5px;
+    margin: 2px;
     cursor: pointer;
 }
 .menu-button {
@@ -29,7 +29,7 @@ body, html, #cesiumContainer {
     border-radius: 5px; font-weight: bold; color: white;
     transition: 0.3s;
     font-size: 16px;
-    margin: 5px;
+    margin: 2px;
     cursor: pointer;
 }
 
@@ -46,17 +46,17 @@ body, html, #cesiumContainer {
     }
 
     .btn {
-        padding: 10px 20px; /* Area klik lebih luas */
-        font-size: 12px;    /* Tulisan lebih besar */
-        margin: 5px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        padding: 10px 10px; /* Area klik lebih luas */
+        font-size: 10px;    /* Tulisan lebih besar */
+        margin: 1px 2px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
     }
 
     .menu-button {
-        padding: 10px 20px; /* Area klik lebih luas */
-        font-size: 12px;    /* Tulisan lebih besar */
-        margin: 5px 5px;   /* Jarak antar tombol agar tidak salah tekan */
+        padding: 10px 10px; /* Area klik lebih luas */
+        font-size: 10px;    /* Tulisan lebih besar */
+        margin: 1px 2px;   /* Jarak antar tombol agar tidak salah tekan */
         width: 50%;         /* Opsional: Tombol melebar hampir memenuhi layar */
         display: block;     /* Membuat tombol berderet ke bawah */
     }
@@ -69,9 +69,52 @@ body, html, #cesiumContainer {
         text-align: center;
     }
     .chart-wrapper {
-        height: 50px; /* Lebih pendek di HP */
+        height: 50%; /* Lebih pendek di HP */
     }
-    
+    #score-panel {
+        font-size: 0.9rem;
+    }
+
+    .summary-card {
+        width: 140px; /* Diperkecil drastis */
+        padding: 8px;
+        left: 5px;
+        top: 5px;
+    }
+
+    .summary-card h3 {
+        font-size: 0.75rem; /* Judul lebih kecil */
+        margin-bottom: 5px;
+    }
+
+    .summary-grid {
+        gap: 5px; /* Jarak antar item dipersempit */
+    }
+
+    .label {
+        font-size: 0.55rem; /* Label (Total Strokes dll) sangat kecil */
+    }
+
+    .value {
+        font-size: 1rem; /* Angka tetap terbaca tapi tidak raksasa */
+    }
+
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 3px;
+        margin-top: 8px;
+    }
+
+    #newGameBtn {
+        font-size: 0.65rem; /* Tombol diperkecil */
+        padding: 5px;
+    }
+
+    #toolbar-info {
+        font-size: 0.8rem;
+        padding: 6px;
+        max-width: 90vw;
+    }
 }
 
 #toolbar-info {
@@ -87,7 +130,7 @@ body, html, #cesiumContainer {
     left: 0;
     width: 100%;
     background: rgba(255, 255, 255, 0.8); /* Putih transparan */
-    z-index: 1000;
+    z-index: 1500;
     display: none; /* Muncul hanya saat ada data */
     padding: 2px;
     box-sizing: border-box;
@@ -104,5 +147,49 @@ body, html, #cesiumContainer {
 
 #cesiumContainer {
     touch-action: none; /* Mencegah browser melakukan scroll saat kita menyentuh map */
+}
+
+.summary-card {
+    background: rgba(25, 25, 25, 0.9);
+    color: white;
+    padding: 5px;
+    border-radius: 3px;
+    border: 1px solid #444;
+    width: 220px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-top: 1px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.label {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #00ff88; /* Warna hijau khas golf */
+}
+
+.status-badge {
+    margin-top: 5px;
+    text-align: center;
+    padding: 5px;
+    background: #333;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.9rem;
 }
 
